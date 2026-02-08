@@ -7,6 +7,24 @@
   --foreground: #171717;
 }
 
+/* CKEditor Styles */
+.ck-editor__editable {
+  min-height: 300px;
+  direction: rtl !important;
+}
+
+.ck.ck-editor__editable_inline {
+  padding: 0 1rem !important;
+}
+
+.ck.ck-editor__editable_inline > :first-child {
+  margin-top: 0.5rem !important;
+}
+
+.ck.ck-toolbar {
+  direction: rtl !important;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
