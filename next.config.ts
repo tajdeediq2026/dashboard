@@ -2,13 +2,15 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  experimental: {
-    serverActions: {
-      allowedOrigins: ['localhost:7065'],
-    },
-  },
+  // Empty turbopack config to allow build with Turbopack (Next.js 16 default)
+  turbopack: {},
   images: {
     remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'tajdeediq-001-site1.stempurl.com',
+        pathname: '/uploads/**',
+      },
       {
         protocol: 'https',
         hostname: 'localhost',

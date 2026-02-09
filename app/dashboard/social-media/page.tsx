@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
   PlusIcon, 
   PencilIcon, 
@@ -204,10 +205,13 @@ export default function SocialMediaManagement() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       <div className="flex items-center justify-center">
                         {socialMedia.imagePath ? (
-                          <img
+                          <Image
                             src={`https://tajdeediq-001-site1.stempurl.com${socialMedia.imagePath}`}
                             alt={socialMedia.iconName}
+                            width={40}
+                            height={40}
                             className="w-10 h-10 rounded-lg object-cover shadow-sm border border-gray-200"
+                            unoptimized
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
                               target.style.display = 'none';
