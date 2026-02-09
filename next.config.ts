@@ -2,8 +2,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  // Empty turbopack config to allow build with Turbopack (Next.js 16 default)
-  turbopack: {},
   images: {
     remotePatterns: [
       {
