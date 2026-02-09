@@ -16,7 +16,7 @@ interface BreakingNews {
 export default function ViewBreakingNewsPage() {
   const router = useRouter();
   const params = useParams();
-  const id = params.id as string;
+  const id = params?.id as string;
   
   const [loading, setLoading] = useState(true);
   const [breakingNews, setBreakingNews] = useState<BreakingNews | null>(null);
