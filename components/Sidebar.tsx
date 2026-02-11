@@ -13,7 +13,8 @@ import {
   ExclamationTriangleIcon,
   ShareIcon,
   MegaphoneIcon,
-  ClockIcon
+  ClockIcon,
+  ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/outline';
 
 export default function Sidebar() {
@@ -32,6 +33,7 @@ export default function Sidebar() {
     { name: 'وسائل التواصل', href: '/dashboard/social-media', icon: ShareIcon },
     { name: 'أعلن معنا', href: '/dashboard/advertise-with-us', icon: MegaphoneIcon },
     { name: 'مدد الإعلان', href: '/dashboard/advertise-with-us/durations', icon: ClockIcon },
+    { name: 'تواصل معنا', href: '/dashboard/contact-us', icon: ChatBubbleLeftRightIcon },
     { name: 'Users', href: '/dashboard/users', icon: UsersIcon },
     { name: 'Settings', href: '/dashboard/settings', icon: CogIcon },
   ];
