@@ -11,7 +11,9 @@ import {
   CogIcon,
   ChevronUpIcon,
   ExclamationTriangleIcon,
-  ShareIcon
+  ShareIcon,
+  MegaphoneIcon,
+  ClockIcon
 } from '@heroicons/react/24/outline';
 
 export default function Sidebar() {
@@ -28,6 +30,8 @@ export default function Sidebar() {
     { name: 'المقالات في الأعلى', href: '/dashboard/upper-articles', icon: ChevronUpIcon },
     { name: 'الأخبار العاجلة', href: '/dashboard/breaking-news', icon: ExclamationTriangleIcon },
     { name: 'وسائل التواصل', href: '/dashboard/social-media', icon: ShareIcon },
+    { name: 'أعلن معنا', href: '/dashboard/advertise-with-us', icon: MegaphoneIcon },
+    { name: 'مدد الإعلان', href: '/dashboard/advertise-with-us/durations', icon: ClockIcon },
     { name: 'Users', href: '/dashboard/users', icon: UsersIcon },
     { name: 'Settings', href: '/dashboard/settings', icon: CogIcon },
   ];
