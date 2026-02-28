@@ -10,8 +10,8 @@ import {
   TrashIcon,
   EyeIcon,
 } from "@heroicons/react/24/outline";
-import { getUpperArticles } from "../articles/lib/api";
-import { UpperArticle } from "../articles/types/UpperArticle";
+import { getUpperArticles, deleteUpperArticle } from "./lib/api";
+import { UpperArticle } from "./types/UpperArticle";
 import EmptyState from "../../../components/EmptyState";
 
 export default function UpperArticles() {
@@ -68,13 +68,7 @@ export default function UpperArticles() {
   const handleDeleteUpperArticle = async (id: number) => {
     if (window.confirm("هل أنت متأكد من حذف هذا المقال العلوي؟")) {
       try {
-        const response = await fetch(`https://tajdeediq-001-site1.stempurl.com/api/UpperArticles/${id}`, {
-          method: "DELETE",
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to delete upper article");
-        }
+        await deleteUpperArticle(id);
 
         // Remove the upper article from the local state
         setUpperArticles(upperArticles.filter((upperArticle) => upperArticle.upperArticleId !== id));

@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createUpperArticle } from "../../articles/lib/api";
-import { CreateUpperArticleDto } from "../../articles/types/UpperArticle";
+import { createUpperArticle } from "../lib/api";
+import { CreateUpperArticleDto } from "../types/UpperArticle";
 import { toast } from "react-hot-toast";
 
 export default function AddUpperArticle() {

@@ -7,6 +7,15 @@ module.exports = {
   ],
   theme: {
     extend: {
+      colors: {
+        'custom-green': {
+          DEFAULT: '#22C55E',
+          hover: '#16A34A',
+          dark: '#15803D',
+          50: '#F0FDF4',
+          100: '#DCFCE7',
+        },
+      },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic':
