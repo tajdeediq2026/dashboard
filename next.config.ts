@@ -18,15 +18,16 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://tajdeediq-001-site1.stempurl.com';
+    // Route API/backend and uploads through the local Next.js proxy endpoint
+    // to avoid CORS and invalid external rewrite validation during build.
     return [
       {
         source: '/api/backend/:path*',
-        destination: `${apiBase}/api/:path*`,
+        destination: '/api/proxy/api/:path*',
       },
       {
         source: '/uploads/:path*',
-        destination: `${apiBase}/uploads/:path*`,
+        destination: '/api/proxy/uploads/:path*',
       },
     ];
   },
