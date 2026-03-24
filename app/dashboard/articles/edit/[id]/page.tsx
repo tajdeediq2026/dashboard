@@ -18,6 +18,8 @@ import { getCategories, getTags, getPodcastTypes, getUpperArticles, getArticles,
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 
+const CKEDITOR_LICENSE_KEY = process.env.NEXT_PUBLIC_CKEDITOR_LICENSE_KEY || "GPL";
+
 export default function EditArticle({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id } = use(params);
@@ -55,7 +57,7 @@ export default function EditArticle({ params }: { params: Promise<{ id: string }
       try {
         setLoading(true);
         // Fetch article data
-        const articleResponse = await fetch(`https://tajdeediq-001-site1.stempurl.com/api/Articles/${id}`);
+        const articleResponse = await fetch(`/api/backend/Articles/${id}`);
         if (!articleResponse.ok) {
           throw new Error(`HTTP error! status: ${articleResponse.status}`);
         }
@@ -377,7 +379,7 @@ export default function EditArticle({ params }: { params: Promise<{ id: string }
                   if (errors.articleContent) {
                     setErrors((prev) => { const newErrors = { ...prev }; delete newErrors.articleContent; return newErrors; });
                   }
-                }} config={{ language: 'ar', removePlugins: ['Title'], toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|', 'indent', 'outdent', '|', 'blockQuote', 'insertTable', 'undo', 'redo'] }} />
+                }} config={{ licenseKey: CKEDITOR_LICENSE_KEY, language: 'ar', removePlugins: ['Title'], toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|', 'indent', 'outdent', '|', 'blockQuote', 'insertTable', 'undo', 'redo'] }} />
               </div>
               {errors.articleContent && (<p className="mt-1 text-sm text-red-600 text-right">{errors.articleContent}</p>)}
             </div>

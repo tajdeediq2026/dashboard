@@ -19,6 +19,8 @@ import Image from "next/image";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 
+const CKEDITOR_LICENSE_KEY = process.env.NEXT_PUBLIC_CKEDITOR_LICENSE_KEY || "GPL";
+
 export default function AddArticle() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -415,6 +417,7 @@ export default function AddArticle() {
                 data={formData.articleContent}
                 onChange={handleEditorChange}
                 config={{
+                  licenseKey: CKEDITOR_LICENSE_KEY,
                   language: 'ar',
                   removePlugins: ['Title'],
                   toolbar: [

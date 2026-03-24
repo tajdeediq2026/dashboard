@@ -84,7 +84,7 @@ export default function Articles() {
   const handleDeleteArticle = async (id: string) => {
     if (window.confirm("هل أنت متأكد من حذف هذا المقال؟")) {
       try {
-        const response = await fetch(`https://tajdeediq-001-site1.stempurl.com/api/Articles/${id}`, {
+        const response = await fetch(`/api/backend/Articles/${id}`, {
           method: "DELETE",
         });
 

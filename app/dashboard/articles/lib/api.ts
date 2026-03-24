@@ -5,20 +5,31 @@ import { Tag, CreateTagDto, UpdateTagDto } from '../types/Tag';
 import { PodcastType } from '../types/PodcastType';
 import { UpperArticle, CreateUpperArticleDto, UpdateUpperArticleDto } from '../../upper-articles/types/UpperArticle';
 
-// Configure axios for HTTPS development with self-signed certificates
-if (typeof window === 'undefined') {
-  // Server-side configuration
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+// Bypass TLS cert verification for server-side requests in non-production only
+// (e.g. local backend with a self-signed certificate).
+// Uses require() so the Node.js 'https' module is not bundled for the browser.
+let _httpsAgent: import('https').Agent | undefined;
+if (typeof window === 'undefined' && process.env.NODE_ENV !== 'production') {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const https = require('https') as typeof import('https');
+  _httpsAgent = new https.Agent({ rejectUnauthorized: false });
 }
 
 // Create axios instance with better error handling
 const api = axios.create({
-  timeout: 15000,
+  httpsAgent: _httpsAgent,
+  timeout: 30000, // 30 s — gives slow shared-hosting backends enough time
   headers: {
     'Accept': 'application/json',
     'Content-Type': 'application/json'
   }
 });
+
+// Set default baseURL to server-side configured API; client will override to use proxy.
+api.defaults.baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://tajdeediq-001-site1.stempurl.com';
+if (typeof window !== 'undefined') {
+  api.defaults.baseURL = '';
+}
 
 // Add request interceptor for debugging
 api.interceptors.request.use(
@@ -49,12 +60,12 @@ api.interceptors.response.use(
   }
 );
 
-const BASE_API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://tajdeediq-001-site1.stempurl.com';
-const API_URL = `${BASE_API_URL}/api/Articles`;
-const Categories_API_URL = `${BASE_API_URL}/api/Categories`;
-const Tags_API_URL = `${BASE_API_URL}/api/Tags`;
-const PodcastTypes_API_URL = `${BASE_API_URL}/api/PodcastTypes`;
-const UpperArticles_API_URL = `${BASE_API_URL}/api/UpperArticles`;
+const API_PREFIX = typeof window === 'undefined' ? '/api' : '/api/backend';
+const API_URL = `${API_PREFIX}/Articles`;
+const Categories_API_URL = `${API_PREFIX}/Categories`;
+const Tags_API_URL = `${API_PREFIX}/Tags`;
+const PodcastTypes_API_URL = `${API_PREFIX}/PodcastTypes`;
+const UpperArticles_API_URL = `${API_PREFIX}/UpperArticles`;
 
 export const updateArticle = async (id: string, articleData: ArticleCreate, file?: File): Promise<ArticleAll> => {
   try {
@@ -114,41 +125,31 @@ export const updateArticle = async (id: string, articleData: ArticleCreate, file
       });
     }
 
-    const response = await fetch(`${API_URL}/${id}`, {
-      method: 'PUT',
-      body: formData,
+    const response = await api.put<ArticleAll>(`${API_URL}/${id}`, formData, {
+      headers: {
+        Accept: 'application/json'
+      },
+      timeout: 30000,
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
+      validateStatus: () => true
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Update article failed:', errorText);
-      throw new Error(errorText || `HTTP error! status: ${response.status}`);
+    if (response.status >= 400) {
+      const errorPayload = typeof response.data === 'string'
+        ? response.data
+        : JSON.stringify(response.data);
+      console.error('Update article failed:', errorPayload);
+      throw new Error(errorPayload || `HTTP error! status: ${response.status}`);
     }
 
-    // Check if response has content before trying to parse as JSON
-    const responseText = await response.text();
-    console.log('Raw response:', responseText);
-    
-    if (!responseText.trim()) {
-      // Empty response - this is often successful for updates
-      console.log('Article updated successfully (empty response)');
-      return {} as ArticleAll; // Return empty object for successful updates with no content
+    if (response.status === 204 || response.data == null) {
+      console.log('Article updated successfully (no content response)');
+      return {} as ArticleAll;
     }
-    
-    try {
-      const result = JSON.parse(responseText);
-      console.log('Article updated successfully:', result);
-      return result;
-    } catch (parseError) {
-      console.error('Failed to parse JSON response:', parseError);
-      console.error('Response was:', responseText);
-      // If JSON parsing fails but the request was successful, still return success
-      if (response.status >= 200 && response.status < 300) {
-        console.log('Update successful despite JSON parsing issue');
-        return {} as ArticleAll;
-      }
-      throw new Error(`Invalid JSON response: ${responseText}`);
-    }
+
+    console.log('Article updated successfully:', response.data);
+    return response.data;
   } catch (error) {
     console.error('Error in updateArticle:', error);
     throw error;
@@ -188,7 +189,7 @@ export const createArticle = async (articleData: ArticleCreate, file?: File): Pr
     // Check if category exists
     let categoryResponse;
     try {
-      categoryResponse = await axios.get(`${Categories_API_URL}/${articleData.categoryId.id}`);
+      categoryResponse = await api.get(`${Categories_API_URL}/${articleData.categoryId.id}`);
       console.log('Category response:', categoryResponse.data);
       if (!categoryResponse.data) {
         throw new Error('Category not found');
@@ -242,7 +243,7 @@ export const createArticle = async (articleData: ArticleCreate, file?: File): Pr
     formData.append('updatedDate', now);
     console.log('Added date fields:', { createdDate: articleData.createdDate?.toISOString() || now, updatedDate: now });
 
-    // Append image file if it exists - FIXED: Use 'Image' instead of 'imageFile'
+          categoryResponse = await api.get(`${Categories_API_URL}/${articleData.categoryId.id}`);
     if (file) {
       formData.append('Image', file, file.name);
       console.log('Uploading file:', {
@@ -270,7 +271,7 @@ export const createArticle = async (articleData: ArticleCreate, file?: File): Pr
     // Send the request with proper headers for file upload
     // Note: Don't manually set Content-Type for multipart/form-data, let axios handle it
     console.log('About to send POST request to:', API_URL);
-    const response = await axios.post<ArticleAll>(API_URL, formData, {
+    const response = await api.post<ArticleAll>(API_URL, formData, {
       headers: {
         'Accept': 'application/json'
       },
@@ -324,7 +325,6 @@ export const createArticle = async (articleData: ArticleCreate, file?: File): Pr
         hasResponse: !!error.response,
         hasRequest: !!error.request
       });
-      
       // Try to extract error message from different possible formats
       let errorMessage = 'فشل في إنشاء المقال';
       
@@ -380,7 +380,7 @@ export const getArticles = async (): Promise<ArticleAll[]> => {
 };
 
 export const getArticle = async (id: string): Promise<ArticleAll> => {
-  const response = await axios.get(`${API_URL}/${id}`);
+  const response = await api.get(`${API_URL}/${id}`);
   return response.data;
 };
 
@@ -388,7 +388,7 @@ export const getArticle = async (id: string): Promise<ArticleAll> => {
 export const createTodo = async (data: { articleTitle: string; categoryId: number }): Promise<ArticleAll> => {
   try {
     // Validate category existence before proceeding
-    const categoryResponse = await axios.get(`${Categories_API_URL}/${data.categoryId}`);
+    const categoryResponse = await api.get(`${Categories_API_URL}/${data.categoryId}`);
     if (!categoryResponse.data || !categoryResponse.data.name) {
       throw new Error('Category does not exist');
     }
@@ -400,7 +400,7 @@ export const createTodo = async (data: { articleTitle: string; categoryId: numbe
     formData.append('content', '');  // Optional: Add default content if needed
     formData.append('excerpt', data.articleTitle.substring(0, 100));  // Optional: Generate excerpt from title
 
-    const response = await axios.post<ArticleAll>(API_URL, formData, {
+    const response = await api.post<ArticleAll>(API_URL, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       }
@@ -441,7 +441,7 @@ export const createTodo = async (data: { articleTitle: string; categoryId: numbe
   }
 };
 export const createCategory = async (todo: Omit<CategoryAll, 'id' |'categorySlug'>): Promise<CategoryAll> => {
-  const response = await axios.post(Categories_API_URL, todo);
+  const response = await api.post(Categories_API_URL, todo);
   return response.data;
 }
 
@@ -462,7 +462,7 @@ export const getCategories = async (): Promise<CategoryAll[]> => {
 
 export const updateCategory = async (id: number, categoryData: Partial<CategoryAll>): Promise<CategoryAll> => {
   try {
-    const response = await axios.put(`${Categories_API_URL}/${id}`, {
+    const response = await api.put(`${Categories_API_URL}/${id}`, {
       ...categoryData,
       id: id // Ensure ID is included in the request
     });
@@ -474,12 +474,12 @@ export const updateCategory = async (id: number, categoryData: Partial<CategoryA
 };
 
 export const deleteCategory = async (id: number): Promise<void> => {
-  await axios.delete(`${Categories_API_URL}/${id}`);
+  await api.delete(`${Categories_API_URL}/${id}`);
 };
 
 export const getArticlesByCategory = async (categoryId: number): Promise<ArticleAll[]> => {
   try {
-    const response = await axios.get(`${API_URL}/category/${categoryId}`, {
+    const response = await api.get(`${API_URL}/category/${categoryId}`, {
       headers: {
         'Accept': 'application/json'
       }
@@ -504,6 +504,12 @@ export const getTags = async (): Promise<Tag[]> => {
     if (axios.isAxiosError(error)) {
       console.error('API Error:', error.response?.data);
       console.error('Status:', error.response?.status);
+      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        throw new Error('انتهت مهلة الاتصال بالخادم — يرجى المحاولة مرة أخرى');
+      }
+      if (error.response?.status === 504) {
+        throw new Error('الخادم لم يستجب في الوقت المتوقع — يرجى المحاولة مرة أخرى');
+      }
     }
     throw error;
   }
@@ -511,7 +517,7 @@ export const getTags = async (): Promise<Tag[]> => {
 
 export const getTag = async (id: number): Promise<Tag> => {
   try {
-    const response = await axios.get(`${Tags_API_URL}/${id}`, {
+    const response = await api.get(`${Tags_API_URL}/${id}`, {
       headers: {
         'Accept': 'application/json'
       }
@@ -528,12 +534,28 @@ export const getTag = async (id: number): Promise<Tag> => {
 
 export const createTag = async (tagData: CreateTagDto): Promise<Tag> => {
   try {
-    const response = await axios.post(Tags_API_URL, tagData, {
+    // Ensure backend property names match expected DTO (TagName)
+    const payload: { TagName: string } = { TagName: tagData.tagName };
+    console.log('createTag payload:', payload);
+
+    const response = await api.post<Tag>(Tags_API_URL, payload, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
-      }
+      },
+      validateStatus: () => true // handle errors manually so we can log response body
     });
+
+    console.log('createTag response status:', response.status, 'data:', response.data);
+
+    if (response.status >= 400) {
+      const body = response.data as { error?: string; inner?: string; title?: string; errors?: Record<string, string[]> } | null;
+      const validationError = body?.errors ? JSON.stringify(body.errors) : null;
+      const msg = body?.inner || body?.error || body?.title || validationError || `createTag failed with status ${response.status}`;
+      console.error('createTag failed:', response.status, body);
+      throw new Error(msg);
+    }
+
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -546,7 +568,11 @@ export const createTag = async (tagData: CreateTagDto): Promise<Tag> => {
 
 export const updateTag = async (id: number, tagData: UpdateTagDto): Promise<void> => {
   try {
-    await axios.put(`${Tags_API_URL}/${id}`, tagData, {
+    const payload: { TagName?: string } = {};
+    if (tagData.tagName !== undefined && tagData.tagName !== null) {
+      payload.TagName = tagData.tagName!;
+    }
+    await api.put(`${Tags_API_URL}/${id}`, payload, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
@@ -563,7 +589,7 @@ export const updateTag = async (id: number, tagData: UpdateTagDto): Promise<void
 
 export const deleteTag = async (id: number): Promise<void> => {
   try {
-    await axios.delete(`${Tags_API_URL}/${id}`);
+    await api.delete(`${Tags_API_URL}/${id}`);
   } catch (error) {
     if (axios.isAxiosError(error)) {
       console.error('API Error:', error.response?.data);
@@ -608,7 +634,7 @@ export const getAvailableUpperArticles = async (excludeArticleId?: string): Prom
     // Try the new Available endpoint first
     const params = excludeArticleId ? { excludeArticleId } : {};
     
-    const response = await axios.get(`${UpperArticles_API_URL}/Available`, {
+    const response = await api.get(`${UpperArticles_API_URL}/Available`, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
@@ -652,7 +678,7 @@ export const getAvailableUpperArticles = async (excludeArticleId?: string): Prom
 
 export const getUpperArticleById = async (id: number): Promise<UpperArticle> => {
   try {
-    const response = await axios.get(`${UpperArticles_API_URL}/${id}`, {
+    const response = await api.get(`${UpperArticles_API_URL}/${id}`, {
       headers: {
         'Accept': 'application/json'
       }
@@ -669,7 +695,7 @@ export const getUpperArticleById = async (id: number): Promise<UpperArticle> => 
 
 export const createUpperArticle = async (upperArticle: CreateUpperArticleDto): Promise<UpperArticle> => {
   try {
-    const response = await axios.post(UpperArticles_API_URL, upperArticle, {
+    const response = await api.post(UpperArticles_API_URL, upperArticle, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
@@ -687,7 +713,7 @@ export const createUpperArticle = async (upperArticle: CreateUpperArticleDto): P
 
 export const updateUpperArticle = async (id: number, upperArticle: UpdateUpperArticleDto): Promise<UpperArticle> => {
   try {
-    const response = await axios.put(`${UpperArticles_API_URL}/${id}`, upperArticle, {
+    const response = await api.put(`${UpperArticles_API_URL}/${id}`, upperArticle, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
@@ -705,7 +731,7 @@ export const updateUpperArticle = async (id: number, upperArticle: UpdateUpperAr
 
 export const deleteUpperArticle = async (id: number): Promise<void> => {
   try {
-    await axios.delete(`${UpperArticles_API_URL}/${id}`, {
+    await api.delete(`${UpperArticles_API_URL}/${id}`, {
       headers: {
         'Accept': 'application/json'
       }

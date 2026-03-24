@@ -15,7 +15,7 @@ export default function ViewArticle({ params }: { params: Promise<{ id: string }
   useEffect(() => {
     const fetchArticle = async () => {
       try {
-        const response = await fetch(`https://tajdeediq-001-site1.stempurl.com/api/Articles/${id}`);
+        const response = await fetch(`/api/backend/Articles/${id}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
