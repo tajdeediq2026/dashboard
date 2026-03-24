@@ -5,19 +5,12 @@ import { Tag, CreateTagDto, UpdateTagDto } from '../types/Tag';
 import { PodcastType } from '../types/PodcastType';
 import { UpperArticle, CreateUpperArticleDto, UpdateUpperArticleDto } from '../../upper-articles/types/UpperArticle';
 
-// Bypass TLS cert verification for server-side requests in non-production only
-// (e.g. local backend with a self-signed certificate).
-// Uses require() so the Node.js 'https' module is not bundled for the browser.
-let _httpsAgent: import('https').Agent | undefined;
 if (typeof window === 'undefined' && process.env.NODE_ENV !== 'production') {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const https = require('https') as typeof import('https');
-  _httpsAgent = new https.Agent({ rejectUnauthorized: false });
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 }
 
 // Create axios instance with better error handling
 const api = axios.create({
-  httpsAgent: _httpsAgent,
   timeout: 30000, // 30 s — gives slow shared-hosting backends enough time
   headers: {
     'Accept': 'application/json',

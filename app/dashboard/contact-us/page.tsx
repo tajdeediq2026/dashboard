@@ -23,13 +23,20 @@ export default function ContactUsPage() {
   const fetchItems = async () => {
     try {
       setLoading(true);
-      const response = await fetch(apiUrl);
-      if (!response.ok) throw new Error('Failed to fetch');
+      const response = await fetch(apiUrl, { cache: 'no-store' });
+      if (!response.ok) {
+        const errorBody = await response.text().catch(() => '');
+        console.warn('ContactUs API returned non-success status:', response.status, errorBody.slice(0, 500));
+        setItems([]);
+        toast.error('تعذر تحميل رسائل التواصل حالياً');
+        return;
+      }
       const data = await response.json();
-      setItems(data);
+      setItems(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Error fetching contact messages:', error);
-      toast.error('فشل في تحميل رسائل التواصل');
+      console.warn('Network error while fetching contact messages:', error);
+      setItems([]);
+      toast.error('فشل الاتصال بالخادم');
     } finally {
       setLoading(false);
     }
@@ -47,12 +54,17 @@ export default function ContactUsPage() {
       const response = await fetch(`${apiUrl}/${id}`, {
         method: 'DELETE',
       });
-      if (!response.ok) throw new Error('Failed to delete');
+      if (!response.ok) {
+        const errorBody = await response.text().catch(() => '');
+        console.warn('ContactUs delete failed:', response.status, errorBody.slice(0, 500));
+        toast.error('تعذر حذف الرسالة حالياً');
+        return;
+      }
       toast.success('تم حذف الرسالة بنجاح');
       fetchItems();
     } catch (error) {
-      console.error('Error:', error);
-      toast.error('فشل في حذف الرسالة');
+      console.warn('Network error while deleting contact message:', error);
+      toast.error('فشل الاتصال بالخادم');
     }
   };
 

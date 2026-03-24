@@ -23,10 +23,6 @@ export default function AdvertiseWithUsDurationsPage() {
   const [formName, setFormName] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const apiUrl =
-    process.env.NEXT_PUBLIC_API_URL ||
-    'https://tajdeediq-001-site1.stempurl.com';
-
   const fetchDurations = async () => {
     try {
       setLoading(true);

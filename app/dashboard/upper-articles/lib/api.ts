@@ -1,18 +1,29 @@
 import axios from 'axios';
 import { UpperArticle, CreateUpperArticleDto, UpdateUpperArticleDto } from '../types/UpperArticle';
 
-// Configure axios for HTTPS development with self-signed certificates
-if (typeof window === 'undefined') {
-  // Server-side configuration
+if (typeof window === 'undefined' && process.env.NODE_ENV !== 'production') {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 }
 
-const UpperArticles_API_URL = 'https://tajdeediq-001-site1.stempurl.com/api/UpperArticles';
+const api = axios.create({
+  timeout: 15000,
+  headers: {
+    Accept: 'application/json',
+    'Content-Type': 'application/json'
+  }
+});
+
+api.defaults.baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://tajdeediq-001-site1.stempurl.com';
+if (typeof window !== 'undefined') {
+  api.defaults.baseURL = '/api/proxy';
+}
+
+const UpperArticles_API_URL = `/api/UpperArticles`;
 
 // UpperArticles API Functions
 export const getUpperArticles = async (): Promise<UpperArticle[]> => {
   try {
-    const response = await axios.get(UpperArticles_API_URL, {
+    const response = await api.get(UpperArticles_API_URL, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
@@ -30,7 +41,7 @@ export const getUpperArticles = async (): Promise<UpperArticle[]> => {
 
 export const getUpperArticle = async (id: number): Promise<UpperArticle> => {
   try {
-    const response = await axios.get(`${UpperArticles_API_URL}/${id}`, {
+    const response = await api.get(`${UpperArticles_API_URL}/${id}`, {
       headers: {
         'Accept': 'application/json'
       }
@@ -47,7 +58,7 @@ export const getUpperArticle = async (id: number): Promise<UpperArticle> => {
 
 export const createUpperArticle = async (upperArticleData: CreateUpperArticleDto): Promise<UpperArticle> => {
   try {
-    const response = await axios.post(UpperArticles_API_URL, upperArticleData, {
+    const response = await api.post(UpperArticles_API_URL, upperArticleData, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
@@ -65,7 +76,7 @@ export const createUpperArticle = async (upperArticleData: CreateUpperArticleDto
 
 export const updateUpperArticle = async (id: number, upperArticleData: UpdateUpperArticleDto): Promise<void> => {
   try {
-    await axios.put(`${UpperArticles_API_URL}/${id}`, upperArticleData, {
+    await api.put(`${UpperArticles_API_URL}/${id}`, upperArticleData, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
@@ -82,7 +93,7 @@ export const updateUpperArticle = async (id: number, upperArticleData: UpdateUpp
 
 export const deleteUpperArticle = async (id: number): Promise<void> => {
   try {
-    await axios.delete(`${UpperArticles_API_URL}/${id}`);
+    await api.delete(`${UpperArticles_API_URL}/${id}`);
   } catch (error) {
     if (axios.isAxiosError(error)) {
       console.error('API Error:', error.response?.data);
