@@ -12,6 +12,10 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      VC_TOKEN: ${{ secrets.VC_TOKEN }}
+      VC_ORG_ID: ${{ secrets.VC_ORG_ID }}
+      VC_PROJECT_ID: ${{ secrets.VC_PROJECT_ID }}
 
     steps:
       - name: Checkout
@@ -26,11 +30,26 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate deploy secrets
+        run: |
+          [ -n "$VC_TOKEN" ] || (echo "Missing secret: VC_TOKEN" && exit 1)
+          [ -n "$VC_ORG_ID" ] || (echo "Missing secret: VC_ORG_ID" && exit 1)
+          [ -n "$VC_PROJECT_ID" ] || (echo "Missing secret: VC_PROJECT_ID" && exit 1)
+
       - name: Pull Vercel environment
-        run: npx vercel pull --yes --environment=production
+        run: npx vercel pull --yes --environment=production --token="$VC_TOKEN"
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VC_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VC_PROJECT_ID }}
 
       - name: Build app via Vercel
-        run: npx vercel build --prod
+        run: npx vercel build --prod --token="$VC_TOKEN"
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VC_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VC_PROJECT_ID }}
 
       - name: Deploy to Vercel
-        run: npx vercel deploy --prebuilt --prod
+        run: npx vercel deploy --prebuilt --prod --token="$VC_TOKEN"
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VC_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VC_PROJECT_ID }}
