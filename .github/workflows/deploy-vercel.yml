@@ -39,17 +39,17 @@ jobs:
       - name: Pull Vercel environment
         run: npx vercel pull --yes --environment=production --token="$VC_TOKEN"
         env:
-          VERCEL_ORG_ID: ${{ secrets.VC_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VC_PROJECT_ID }}
+          VERCEL_ORG_ID: ${{ env.VC_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ env.VC_PROJECT_ID }}
 
       - name: Build app via Vercel
         run: npx vercel build --prod --token="$VC_TOKEN"
         env:
-          VERCEL_ORG_ID: ${{ secrets.VC_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VC_PROJECT_ID }}
+          VERCEL_ORG_ID: ${{ env.VC_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ env.VC_PROJECT_ID }}
 
       - name: Deploy to Vercel
         run: npx vercel deploy --prebuilt --prod --token="$VC_TOKEN"
         env:
-          VERCEL_ORG_ID: ${{ secrets.VC_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VC_PROJECT_ID }}
+          VERCEL_ORG_ID: ${{ env.VC_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ env.VC_PROJECT_ID }}
