@@ -2,20 +2,24 @@
   "name": "dashboard-login",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.9 <24"
+  },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "dev": "npm exec --yes --package=node@22 -- node ./node_modules/next/dist/bin/next dev --webpack",
+    "build": "npm exec --yes --package=node@22 -- node ./node_modules/next/dist/bin/next build --webpack",
+    "start": "npm exec --yes --package=node@22 -- node ./node_modules/next/dist/bin/next start",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@ckeditor/ckeditor5-build-classic": "^38.1.1",
     "@ckeditor/ckeditor5-react": "^9.5.0",
-    "ckeditor5": "^46.0.0",
+    "@floating-ui/dom": "1.6.13",
     "@headlessui/react": "^2.2.2",
     "@heroicons/react": "^2.2.0",
     "@tailwindcss/forms": "^0.5.10",
     "axios": "^1.9.0",
+    "ckeditor5": "^46.0.0",
     "next": "16.2.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

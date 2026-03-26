@@ -13,8 +13,7 @@ if (typeof window === 'undefined' && process.env.NODE_ENV !== 'production') {
 const api = axios.create({
   timeout: 30000, // 30 s — gives slow shared-hosting backends enough time
   headers: {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json'
+    'Accept': 'application/json'
   }
 });
 
