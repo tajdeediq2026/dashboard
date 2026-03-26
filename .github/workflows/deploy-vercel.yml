@@ -1,5 +1,4 @@
 name: Deploy Dashboard To Vercel
-
 on:
   push:
     branches: ["main"]
