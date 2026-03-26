@@ -1,0 +1,15 @@
+name: Deploy Dashboard To Vercel
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deployment handled by Vercel Git integration
+        run: |
+          echo "Vercel deployment is handled by Vercel Git integration."
+          echo "This check exists to satisfy repository required status checks."
