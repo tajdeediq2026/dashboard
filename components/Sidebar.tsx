@@ -15,7 +15,8 @@ import {
   MegaphoneIcon,
   ClockIcon,
   ChatBubbleLeftRightIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 
 export default function Sidebar() {
@@ -36,6 +37,7 @@ export default function Sidebar() {
     { name: 'مدد الإعلان', href: '/dashboard/advertise-with-us/durations', icon: ClockIcon },
     { name: 'تواصل معنا', href: '/dashboard/contact-us', icon: ChatBubbleLeftRightIcon },
     { name: 'عن جريدة تجديد', href: '/dashboard/about-us', icon: InformationCircleIcon },
+    { name: 'سياسة الخصوصية', href: '/dashboard/privacy-policy', icon: ShieldCheckIcon },
     { name: 'Users', href: '/dashboard/users', icon: UsersIcon },
     { name: 'Settings', href: '/dashboard/settings', icon: CogIcon },
   ];
