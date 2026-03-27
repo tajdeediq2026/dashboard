@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=20.9 <24"
+    "node": ">=20.9"
   },
   "scripts": {
     "dev": "npm exec --yes --package=node@22 -- node ./node_modules/next/dist/bin/next dev --webpack",
@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@ckeditor/ckeditor5-build-classic": "^38.1.1",
-    "@ckeditor/ckeditor5-react": "^9.5.0",
+    "@ckeditor/ckeditor5-react": "9.5.0",
     "@floating-ui/dom": "1.6.13",
     "@headlessui/react": "^2.2.2",
     "@heroicons/react": "^2.2.0",
