@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Toaster, toast } from "react-hot-toast";
 import { PencilIcon, TrashIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { getCategories } from "../articles/lib/api";
 
 interface Video {
   videoId: number;
@@ -44,11 +45,8 @@ export default function VideosPage() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch("/api/categories");
-        if (res.ok) {
-          const data = await res.json();
-          setCategories(data);
-        }
+        const data = await getCategories();
+        setCategories(data.map((category) => ({ id: category.id, name: category.name })));
       } catch (error) {
         console.error("Failed to fetch categories:", error);
       }
