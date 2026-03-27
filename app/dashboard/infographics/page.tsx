@@ -296,24 +296,31 @@ export default function InfographicsPage() {
               </select>
             </div>
 
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                name="isPublished"
-                id="isPublished"
-                checked={!formState.isPublished}
-                onChange={(e) => {
-                  setFormState({
-                    ...formState,
-                    isPublished: !e.target.checked,
-                  });
-                }}
-                className="rounded border-gray-300"
-              />
-              <label htmlFor="isPublished" className="text-sm text-gray-700">
-                مسودة
-              </label>
-            </div>
+            <fieldset>
+              <legend className="block text-sm font-medium text-gray-700 mb-2">الحالة</legend>
+              <div className="flex items-center gap-6">
+                <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="radio"
+                    name="status"
+                    checked={formState.isPublished}
+                    onChange={() => setFormState({ ...formState, isPublished: true })}
+                    className="border-gray-300"
+                  />
+                  منشورة
+                </label>
+                <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="radio"
+                    name="status"
+                    checked={!formState.isPublished}
+                    onChange={() => setFormState({ ...formState, isPublished: false })}
+                    className="border-gray-300"
+                  />
+                  مسودة
+                </label>
+              </div>
+            </fieldset>
 
             <div className="flex gap-3">
               <button
