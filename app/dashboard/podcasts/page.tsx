@@ -38,6 +38,7 @@ export default function PodcastsPage() {
   const [podcasts, setPodcasts] = useState<Podcast[]>([]);
   const [loading, setLoading] = useState(true);
   const [formState, setFormState] = useState<FormState>(initialFormState);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [categories, setCategories] = useState<Array<{ id: number; name: string }>>([]);
@@ -62,7 +63,7 @@ export default function PodcastsPage() {
   const fetchPodcasts = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/podcasts");
+      const res = await fetch("/api/backend/Podcasts", { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setPodcasts(data.sort((a: Podcast, b: Podcast) => 
@@ -103,20 +104,40 @@ export default function PodcastsPage() {
 
     try {
       const url = editingId 
-        ? `/api/podcasts/${editingId}`
-        : "/api/podcasts";
+        ? `/api/backend/Podcasts/${editingId}`
+        : "/api/backend/Podcasts";
       
       const method = editingId ? "PUT" : "POST";
+
+      let imagePath = formState.imagePath;
+      if (imageFile) {
+        const uploadFormData = new FormData();
+        uploadFormData.append("file", imageFile);
+        uploadFormData.append("uploadType", "articles");
+
+        const uploadRes = await fetch("/api/backend/Upload", {
+          method: "POST",
+          body: uploadFormData,
+        });
+
+        if (!uploadRes.ok) {
+          throw new Error("Failed to upload image");
+        }
+
+        const uploadData = await uploadRes.json();
+        imagePath = uploadData.imagePath || imagePath;
+      }
 
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formState),
+        body: JSON.stringify({ ...formState, imagePath }),
       });
 
       if (res.ok) {
         toast.success(editingId ? "تم تحديث البودكاست بنجاح" : "تمت إضافة بودكاست جديد");
         setFormState(initialFormState);
+        setImageFile(null);
         setEditingId(null);
         setShowForm(false);
         await fetchPodcasts();
@@ -139,13 +160,14 @@ export default function PodcastsPage() {
       categoryId: podcast.categoryId,
     });
     setEditingId(podcast.podcastId);
+    setImageFile(null);
     setShowForm(true);
   };
 
   const handleDelete = async (id: number) => {
     if (confirm("هل تريد حذف هذا البودكاست؟")) {
       try {
-        const res = await fetch(`/api/podcasts/${id}`, { method: "DELETE" });
+        const res = await fetch(`/api/backend/Podcasts/${id}`, { method: "DELETE" });
         if (res.ok) {
           toast.success("تم حذف البودكاست بنجاح");
           await fetchPodcasts();
@@ -161,6 +183,7 @@ export default function PodcastsPage() {
 
   const closeForm = () => {
     setFormState(initialFormState);
+    setImageFile(null);
     setEditingId(null);
     setShowForm(false);
   };
@@ -240,16 +263,18 @@ export default function PodcastsPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                رابط الصورة
+                الصورة
               </label>
               <input
-                type="text"
-                name="imagePath"
-                value={formState.imagePath}
-                onChange={handleInputChange}
+                type="file"
+                accept="image/*"
+                title="اختر الصورة"
+                onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                placeholder="أدخل رابط الصورة"
               />
+              {formState.imagePath && (
+                <p className="text-xs text-gray-500 mt-1">الصورة الحالية محفوظة</p>
+              )}
             </div>
 
             <div>
@@ -276,12 +301,17 @@ export default function PodcastsPage() {
                 type="checkbox"
                 name="isPublished"
                 id="isPublished"
-                checked={formState.isPublished}
-                onChange={handleInputChange}
+                checked={!formState.isPublished}
+                onChange={(e) => {
+                  setFormState({
+                    ...formState,
+                    isPublished: !e.target.checked,
+                  });
+                }}
                 className="rounded border-gray-300"
               />
               <label htmlFor="isPublished" className="text-sm text-gray-700">
-                منشورة
+                مسودة
               </label>
             </div>
 
