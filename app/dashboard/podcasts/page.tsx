@@ -32,7 +32,7 @@ const initialFormState: FormState = {
   podcastLink: "",
   imagePath: "",
   isPublished: true,
-  categoryId: 1,
+  categoryId: 0,
 };
 
 export default function PodcastsPage() {
@@ -49,7 +49,14 @@ export default function PodcastsPage() {
     const fetchCategories = async () => {
       try {
         const data = await getCategories();
-        setCategories(data.map((category) => ({ id: category.id, name: category.name })));
+        const mapped = data.map((category) => ({ id: category.id, name: category.name }));
+        setCategories(mapped);
+        if (mapped.length > 0) {
+          setFormState((prev) => {
+            const exists = mapped.some((c) => c.id === prev.categoryId);
+            return exists ? prev : { ...prev, categoryId: mapped[0].id };
+          });
+        }
       } catch (error) {
         console.error("Failed to fetch categories:", error);
       }
@@ -88,7 +95,11 @@ export default function PodcastsPage() {
     const { name, value, type } = e.target;
     setFormState({
       ...formState,
-      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
+      [name]: type === "checkbox"
+        ? (e.target as HTMLInputElement).checked
+        : name === "categoryId"
+          ? Number(value)
+          : value,
     });
   };
 
@@ -97,6 +108,11 @@ export default function PodcastsPage() {
     
     if (!formState.podcastTitle || !formState.podcastSummary) {
       toast.error("يرجى ملء جميع الحقول المطلوبة");
+      return;
+    }
+
+    if (!formState.categoryId || formState.categoryId <= 0) {
+      toast.error("يرجى اختيار تصنيف صحيح");
       return;
     }
 
@@ -134,13 +150,14 @@ export default function PodcastsPage() {
 
       if (res.ok) {
         toast.success(editingId ? "تم تحديث البودكاست بنجاح" : "تمت إضافة بودكاست جديد");
-        setFormState(initialFormState);
+        setFormState((prev) => ({ ...initialFormState, categoryId: prev.categoryId }));
         setImageFile(null);
         setEditingId(null);
         setShowForm(false);
         await fetchPodcasts();
       } else {
-        throw new Error("Failed to save podcast");
+        const errorBody = await res.text().catch(() => "");
+        throw new Error(errorBody || "Failed to save podcast");
       }
     } catch (error) {
       toast.error("فشل في حفظ البودكاست");
