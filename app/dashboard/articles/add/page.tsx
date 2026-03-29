@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createArticle, getCategories, getTags, getPodcastTypes, getUpperArticles, getArticles } from "../lib/api";
+import { createArticle, getCategories, getTags, getUpperArticles, getArticles } from "../lib/api";
 import { ArticleCreate } from "../types/Article";
 import { CategoryAll } from "../types/Category";
 import { Tag } from "../types/Tag";
-import { PodcastType } from "../types/PodcastType";
 import { UpperArticle as UpperArticleBase } from "../types/UpperArticle";
 
 // Extend UpperArticle to include assignedArticleTitle and isAvailable for local use
@@ -26,7 +25,6 @@ export default function AddArticle() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categories, setCategories] = useState<CategoryAll[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
-  const [podcastTypes, setPodcastTypes] = useState<PodcastType[]>([]);
   const [upperArticles, setUpperArticles] = useState<UpperArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState<ArticleCreate>({
@@ -43,24 +41,22 @@ export default function AddArticle() {
       name: "",
     },
     tagId: undefined,
-    podcastTypeId: undefined,
     upperArticleId: undefined,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  // Fetch categories, tags, podcast types, and upper articles when component mounts
+  // Fetch categories, tags, and upper articles when component mounts
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         
         // Fetch all data in parallel
-        const [categoriesResponse, tagsResponse, podcastTypesResponse, allUpperArticlesResponse, allArticlesResponse] = await Promise.all([
+        const [categoriesResponse, tagsResponse, allUpperArticlesResponse, allArticlesResponse] = await Promise.all([
           getCategories(),
           getTags(),
-          getPodcastTypes(),
           getUpperArticles(),
           getArticles() // Get all articles to show current assignments
         ]);
@@ -84,9 +80,6 @@ export default function AddArticle() {
         }
         if (Array.isArray(tagsResponse)) {
           setTags(tagsResponse);
-        }
-        if (Array.isArray(podcastTypesResponse)) {
-          setPodcastTypes(podcastTypesResponse);
         }
         if (Array.isArray(upperArticlesResponse)) {
           setUpperArticles(upperArticlesResponse);
@@ -125,7 +118,7 @@ export default function AddArticle() {
         ...prev,
         [name]: checked,
       }));
-    } else if (name === "tagId" || name === "podcastTypeId" || name === "upperArticleId") {
+    } else if (name === "tagId" || name === "upperArticleId") {
       setFormData((prev) => ({
         ...prev,
         [name]: value ? Number(value) : undefined,
@@ -497,30 +490,6 @@ export default function AddArticle() {
               {tags.map((tag) => (
                 <option key={tag.tagId} value={tag.tagId}>
                   {tag.tagName}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="podcastTypeId"
-              className="block text-sm font-medium text-gray-700 text-right"
-            >
-              نوع البودكاست
-            </label>
-            <select
-              id="podcastTypeId"
-              name="podcastTypeId"
-              value={formData.podcastTypeId || ""}
-              onChange={handleInputChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-right text-black"
-              disabled={loading}
-            >
-              <option value="">اختر نوع البودكاست</option>
-              {podcastTypes.map((podcastType) => (
-                <option key={podcastType.podcastId} value={podcastType.podcastId}>
-                  {podcastType.podcastName}
                 </option>
               ))}
             </select>

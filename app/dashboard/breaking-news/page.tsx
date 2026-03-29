@@ -14,6 +14,7 @@ interface BreakingNews {
 }
 
 export default function BreakingNewsPage() {
+  const BREAKING_NEWS_API = '/api/proxy/api/BreakingNews';
   const [breakingNews, setBreakingNews] = useState<BreakingNews[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -21,7 +22,7 @@ export default function BreakingNewsPage() {
   const fetchBreakingNews = async () => {
     try {
       setLoading(true);
-      const response = await fetch('https://tajdeediq-001-site1.stempurl.com/api/BreakingNews', {
+      const response = await fetch(BREAKING_NEWS_API, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -52,7 +53,7 @@ export default function BreakingNewsPage() {
     }
 
     try {
-      const response = await fetch(`https://tajdeediq-001-site1.stempurl.com/api/BreakingNews/${id}`, {
+      const response = await fetch(`${BREAKING_NEWS_API}/${id}`, {
         method: 'DELETE',
       });
 
@@ -70,7 +71,7 @@ export default function BreakingNewsPage() {
 
   const togglePublish = async (id: number, currentStatus: boolean) => {
     try {
-      const response = await fetch(`https://tajdeediq-001-site1.stempurl.com/api/BreakingNews/${id}`, {
+      const response = await fetch(`${BREAKING_NEWS_API}/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

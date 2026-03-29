@@ -122,30 +122,20 @@ export default function PodcastsPage() {
         : "/api/backend/Podcasts";
       
       const method = editingId ? "PUT" : "POST";
-
-      let imagePath = formState.imagePath;
+      const submitFormData = new FormData();
+      submitFormData.append("podcastTitle", formState.podcastTitle);
+      submitFormData.append("podcastSummary", formState.podcastSummary);
+      submitFormData.append("podcastLink", formState.podcastLink || "");
+      submitFormData.append("categoryId", String(formState.categoryId));
+      submitFormData.append("isPublished", String(formState.isPublished));
+      submitFormData.append("imagePath", formState.imagePath || "");
       if (imageFile) {
-        const uploadFormData = new FormData();
-        uploadFormData.append("file", imageFile);
-        uploadFormData.append("uploadType", "articles");
-
-        const uploadRes = await fetch("/api/backend/Upload", {
-          method: "POST",
-          body: uploadFormData,
-        });
-
-        if (!uploadRes.ok) {
-          throw new Error("Failed to upload image");
-        }
-
-        const uploadData = await uploadRes.json();
-        imagePath = uploadData.imagePath || imagePath;
+        submitFormData.append("Image", imageFile, imageFile.name);
       }
 
       const res = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formState, imagePath }),
+        body: submitFormData,
       });
 
       if (res.ok) {

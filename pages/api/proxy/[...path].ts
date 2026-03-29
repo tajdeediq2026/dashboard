@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import axios from 'axios';
 import https from 'https';
+import { getBackendBaseUrl } from '@/lib/backend-url';
 
 // Simple server-side proxy that forwards requests to the configured backend API.
 // Usage from client: fetch('/api/proxy/api/Tags') -> this route will forward to `${NEXT_PUBLIC_API_URL}/api/Tags`.
@@ -30,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { path = [] } = req.query as { path?: string | string[] };
   const pathStr = Array.isArray(path) ? path.join('/') : String(path || '');
 
-  const targetBase = process.env.NEXT_PUBLIC_API_URL || 'https://tajdeediq-001-site1.stempurl.com';
+  const targetBase = getBackendBaseUrl();
   const targetUrl = `${targetBase.replace(/\/$/, '')}/${pathStr}`;
 
   try {
@@ -125,8 +126,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     }
 
-    const err = unknownError instanceof Error ? unknownError : new Error(String(unknownError));
-    console.error('Proxy error:', err.message);
-    res.status(500).json({ error: err.message || 'Proxy error' });
+    const errorDetails = axios.isAxiosError(unknownError)
+      ? {
+          message: unknownError.message,
+          code: unknownError.code,
+          cause: unknownError.cause ? String(unknownError.cause) : undefined,
+          status: unknownError.response?.status
+        }
+      : {
+          message: unknownError instanceof Error ? unknownError.message : String(unknownError)
+        };
+
+    console.error('Proxy error details:', errorDetails);
+    res.status(500).json({
+      error: errorDetails.message || 'Proxy error',
+      ...(process.env.NODE_ENV !== 'production' ? { details: errorDetails } : {})
+    });
   }
 }

@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { getBackendBaseUrl } from '@/lib/backend-url';
 
 interface TestResult {
   endpoint: string;
@@ -27,7 +28,7 @@ interface ApiDebugResponse {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   console.log('=== API Debug Test ===');
   
-  const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://tajdeediq-001-site1.stempurl.com';
+  const BASE_URL = getBackendBaseUrl();
   console.log('Testing connection to:', BASE_URL);
 
   const testResults: ApiDebugResponse = {

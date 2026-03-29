@@ -14,6 +14,7 @@ interface BreakingNews {
 }
 
 export default function ViewBreakingNewsPage() {
+  const BREAKING_NEWS_API = '/api/proxy/api/BreakingNews';
   const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
@@ -24,7 +25,7 @@ export default function ViewBreakingNewsPage() {
   const fetchBreakingNews = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`https://tajdeediq-001-site1.stempurl.com/api/BreakingNews/${id}`, {
+      const response = await fetch(`${BREAKING_NEWS_API}/${id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

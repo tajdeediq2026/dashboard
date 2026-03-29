@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { UpperArticle, CreateUpperArticleDto, UpdateUpperArticleDto } from '../types/UpperArticle';
+import { getBackendBaseUrl } from '@/lib/backend-url';
 
 if (typeof window === 'undefined' && process.env.NODE_ENV !== 'production') {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
@@ -13,7 +14,7 @@ const api = axios.create({
   }
 });
 
-api.defaults.baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://tajdeediq-001-site1.stempurl.com';
+api.defaults.baseURL = getBackendBaseUrl();
 if (typeof window !== 'undefined') {
   api.defaults.baseURL = '/api/proxy';
 }

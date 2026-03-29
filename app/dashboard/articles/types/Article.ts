@@ -15,7 +15,6 @@ export interface ArticleCreate {
   };
   
   tagId?: number;
-  podcastTypeId?: number;
   upperArticleId?: number;
 }
 
@@ -34,7 +33,6 @@ export interface ArticleAll {
   categoryId: number;
   categoryName?: string;
   tagId?: number;
-  podcastTypeId?: number;
   upperArticleId?: number;
   category: {
     id: number;

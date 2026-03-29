@@ -122,30 +122,20 @@ export default function InfographicsPage() {
         : "/api/backend/Infographics";
       
       const method = editingId ? "PUT" : "POST";
-
-      let imagePath = formState.imagePath;
+      const submitFormData = new FormData();
+      submitFormData.append("infographicTitle", formState.infographicTitle);
+      submitFormData.append("infographicSummary", formState.infographicSummary);
+      submitFormData.append("infographicDescription", formState.infographicDescription || "");
+      submitFormData.append("categoryId", String(formState.categoryId));
+      submitFormData.append("isPublished", String(formState.isPublished));
+      submitFormData.append("imagePath", formState.imagePath || "");
       if (imageFile) {
-        const uploadFormData = new FormData();
-        uploadFormData.append("file", imageFile);
-        uploadFormData.append("uploadType", "articles");
-
-        const uploadRes = await fetch("/api/backend/Upload", {
-          method: "POST",
-          body: uploadFormData,
-        });
-
-        if (!uploadRes.ok) {
-          throw new Error("Failed to upload image");
-        }
-
-        const uploadData = await uploadRes.json();
-        imagePath = uploadData.imagePath || imagePath;
+        submitFormData.append("Image", imageFile, imageFile.name);
       }
 
       const res = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formState, imagePath }),
+        body: submitFormData,
       });
 
       if (res.ok) {
@@ -203,6 +193,11 @@ export default function InfographicsPage() {
     setShowForm(false);
   };
 
+  const getCategoryName = (categoryId: number) => {
+    const category = categories.find((cat) => cat.id === categoryId);
+    return category?.name || "غير محدد";
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -212,7 +207,7 @@ export default function InfographicsPage() {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto" dir="rtl">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto" dir="rtl">
       <Toaster position="top-right" />
       
       <div className="flex justify-between items-center mb-6">
@@ -357,47 +352,71 @@ export default function InfographicsPage() {
       )}
 
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="grid grid-cols-1 gap-4 p-6">
+        <div className="p-4 sm:p-6">
           {infographics.length === 0 ? (
             <p className="text-gray-600 text-center py-8">لا توجد رسوميات توضيحية</p>
           ) : (
-            infographics.map((infographic) => (
-              <div
-                key={infographic.infographicId}
-                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {infographic.infographicTitle}
-                    </h3>
-                    <p className="text-sm text-gray-600">{infographic.infographicSummary}</p>
+            <div className="space-y-3">
+              {infographics.map((infographic) => (
+                <article
+                  key={infographic.infographicId}
+                  className="border border-gray-200 rounded-lg p-3 sm:p-4 hover:shadow-md transition"
+                >
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <div className="flex-shrink-0">
+                      {infographic.imagePath ? (
+                        <img
+                          src={infographic.imagePath}
+                          alt={infographic.infographicTitle || "Infographic"}
+                          className="w-28 h-20 sm:w-36 sm:h-24 object-contain rounded border border-gray-200 bg-gray-50"
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).style.display = "none";
+                          }}
+                        />
+                      ) : (
+                        <div className="w-28 h-20 sm:w-36 sm:h-24 rounded border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-xs text-gray-500">
+                          بدون صورة
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 leading-6 line-clamp-1">
+                        {infographic.infographicTitle}
+                      </h3>
+                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                        {infographic.infographicSummary}
+                      </p>
+                      <p className="text-sm text-gray-700 mt-1">
+                        <span className="font-medium">التصنيف:</span> {getCategoryName(infographic.categoryId)}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-2">
+                        {new Date(infographic.modifiedInfographicDate).toLocaleDateString("ar-SA")}
+                      </p>
+                    </div>
+
+                    <div className="flex gap-2 flex-shrink-0">
+                      <button
+                        onClick={() => handleEdit(infographic)}
+                        className="p-2 bg-amber-100 text-amber-700 rounded hover:bg-amber-200 transition"
+                        title="تعديل"
+                      >
+                        <PencilIcon className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(infographic.infographicId)}
+                        className="p-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition"
+                        title="حذف"
+                      >
+                        <TrashIcon className="w-5 h-5" />
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleEdit(infographic)}
-                      className="p-2 bg-amber-100 text-amber-700 rounded hover:bg-amber-200 transition"
-                      title="تعديل"
-                    >
-                      <PencilIcon className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(infographic.infographicId)}
-                      className="p-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition"
-                      title="حذف"
-                    >
-                      <TrashIcon className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-                {infographic.imagePath && (
-                  <p className="text-xs text-gray-500 mb-2">صورة: {infographic.imagePath}</p>
-                )}
-                <p className="text-xs text-gray-500">
-                  {new Date(infographic.modifiedInfographicDate).toLocaleDateString("ar-SA")}
-                </p>
-              </div>
-            ))
+                </article>
+              ))}
+            </div>
           )}
         </div>
       </div>

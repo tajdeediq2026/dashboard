@@ -18,7 +18,7 @@ type Article = {
 };
 
 const ArticlesPage = async () => {
-  const response = await fetch("https://tajdeediq-001-site1.stempurl.com/api/Articles");
+  const response = await fetch('/api/proxy/api/Articles', { cache: 'no-store' });
   const articles: Article[] = await response.json();
   console.log(articles)
   

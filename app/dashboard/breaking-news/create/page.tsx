@@ -12,6 +12,7 @@ interface CreateBreakingNewsForm {
 }
 
 export default function CreateBreakingNewsPage() {
+  const BREAKING_NEWS_API = '/api/proxy/api/BreakingNews';
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<CreateBreakingNewsForm>({
@@ -31,7 +32,7 @@ export default function CreateBreakingNewsPage() {
     try {
       setLoading(true);
       
-      const response = await fetch('https://tajdeediq-001-site1.stempurl.com/api/BreakingNews', {
+      const response = await fetch(BREAKING_NEWS_API, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

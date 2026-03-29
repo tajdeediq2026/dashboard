@@ -20,6 +20,7 @@ interface UpdateBreakingNewsForm {
 }
 
 export default function EditBreakingNewsPage() {
+  const BREAKING_NEWS_API = '/api/proxy/api/BreakingNews';
   const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
@@ -35,7 +36,7 @@ export default function EditBreakingNewsPage() {
   const fetchBreakingNews = useCallback(async () => {
     try {
       setFetchLoading(true);
-      const response = await fetch(`https://tajdeediq-001-site1.stempurl.com/api/BreakingNews/${id}`, {
+      const response = await fetch(`${BREAKING_NEWS_API}/${id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -78,7 +79,7 @@ export default function EditBreakingNewsPage() {
     try {
       setLoading(true);
       
-      const response = await fetch(`https://tajdeediq-001-site1.stempurl.com/api/BreakingNews/${id}`, {
+      const response = await fetch(`${BREAKING_NEWS_API}/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

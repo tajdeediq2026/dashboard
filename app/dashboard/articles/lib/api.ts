@@ -2,8 +2,8 @@ import axios from 'axios';
 import { ArticleAll, ArticleCreate } from '../types/Article';
 import { CategoryAll } from '../types/Category';
 import { Tag, CreateTagDto, UpdateTagDto } from '../types/Tag';
-import { PodcastType } from '../types/PodcastType';
 import { UpperArticle, CreateUpperArticleDto, UpdateUpperArticleDto } from '../../upper-articles/types/UpperArticle';
+import { getBackendBaseUrl } from '@/lib/backend-url';
 
 if (typeof window === 'undefined' && process.env.NODE_ENV !== 'production') {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
@@ -18,7 +18,7 @@ const api = axios.create({
 });
 
 // Set default baseURL to server-side configured API; client will override to use proxy.
-api.defaults.baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://tajdeediq-001-site1.stempurl.com';
+api.defaults.baseURL = getBackendBaseUrl();
 if (typeof window !== 'undefined') {
   api.defaults.baseURL = '';
 }
@@ -56,7 +56,6 @@ const API_PREFIX = typeof window === 'undefined' ? '/api' : '/api/backend';
 const API_URL = `${API_PREFIX}/Articles`;
 const Categories_API_URL = `${API_PREFIX}/Categories`;
 const Tags_API_URL = `${API_PREFIX}/Tags`;
-const PodcastTypes_API_URL = `${API_PREFIX}/PodcastTypes`;
 const UpperArticles_API_URL = `${API_PREFIX}/UpperArticles`;
 
 export const updateArticle = async (id: string, articleData: ArticleCreate, file?: File): Promise<ArticleAll> => {
@@ -94,9 +93,6 @@ export const updateArticle = async (id: string, articleData: ArticleCreate, file
     }
     if (articleData.tagId !== undefined) {
       formData.append('tagId', articleData.tagId.toString());
-    }
-    if (articleData.podcastTypeId !== undefined) {
-      formData.append('podcastTypeId', articleData.podcastTypeId.toString());
     }
     
     // Always send upperArticleId (0 means no assignment/remove assignment)
@@ -220,9 +216,6 @@ export const createArticle = async (articleData: ArticleCreate, file?: File): Pr
     }
     if (articleData.tagId !== undefined) {
       formData.append('tagId', articleData.tagId.toString());
-    }
-    if (articleData.podcastTypeId !== undefined) {
-      formData.append('podcastTypeId', articleData.podcastTypeId.toString());
     }
     // Always send upperArticleId (0 means no assignment/remove assignment)
     const upperArticleIdValue = articleData.upperArticleId ?? 0;
@@ -413,7 +406,6 @@ export const createTodo = async (data: { articleTitle: string; categoryId: numbe
       categoryId: Number(response.data.categoryId),
       categoryName: response.data.categoryName,
       tagId: response.data.tagId,
-      podcastTypeId: response.data.podcastTypeId,
       upperArticleId: response.data.upperArticleId,
       category: {
         id: categoryResponse.data.id,
@@ -583,21 +575,6 @@ export const deleteTag = async (id: number): Promise<void> => {
   try {
     await api.delete(`${Tags_API_URL}/${id}`);
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error('API Error:', error.response?.data);
-      console.error('Status:', error.response?.status);
-    }
-    throw error;
-  }
-};
-
-// PodcastTypes API Functions
-export const getPodcastTypes = async (): Promise<PodcastType[]> => {
-  try {
-    const response = await api.get(PodcastTypes_API_URL);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching podcast types:', error);
     if (axios.isAxiosError(error)) {
       console.error('API Error:', error.response?.data);
       console.error('Status:', error.response?.status);

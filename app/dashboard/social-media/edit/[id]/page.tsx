@@ -15,6 +15,7 @@ interface FormData {
 }
 
 export default function EditSocialMedia() {
+  const API_BASE = '/api/proxy/api';
   const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
@@ -34,8 +35,7 @@ export default function EditSocialMedia() {
   const fetchSocialMedia = useCallback(async () => {
     try {
       setFetchLoading(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://tajdeediq-001-site1.stempurl.com';
-      const response = await fetch(`${apiUrl}/api/SocialMedia/${id}`);
+      const response = await fetch(`${API_BASE}/SocialMedia/${id}`);
       if (!response.ok) {
         throw new Error('Failed to fetch social media');
       }
@@ -82,8 +82,7 @@ export default function EditSocialMedia() {
         uploadFormData.append('file', formData.imageFile);
         uploadFormData.append('uploadType', 'social-media');
 
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://tajdeediq-001-site1.stempurl.com';
-        const uploadResponse = await fetch(`${apiUrl}/api/Upload`, {
+        const uploadResponse = await fetch(`${API_BASE}/Upload`, {
           method: 'POST',
           body: uploadFormData,
         });
@@ -96,8 +95,7 @@ export default function EditSocialMedia() {
         }
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://tajdeediq-001-site1.stempurl.com';
-      const response = await fetch(`${apiUrl}/api/SocialMedia/${id}`, {
+      const response = await fetch(`${API_BASE}/SocialMedia/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

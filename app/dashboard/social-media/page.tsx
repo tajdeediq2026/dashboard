@@ -19,6 +19,7 @@ interface SocialMedia {
 }
 
 export default function SocialMediaManagement() {
+  const API_BASE = '/api/proxy/api';
   const [socialMedias, setSocialMedias] = useState<SocialMedia[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,8 +31,7 @@ export default function SocialMediaManagement() {
   const fetchSocialMedias = async () => {
     try {
       setLoading(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://tajdeediq-001-site1.stempurl.com';
-      const response = await fetch(`${apiUrl}/api/SocialMedia`);
+      const response = await fetch(`${API_BASE}/SocialMedia`);
       if (!response.ok) {
         throw new Error('Failed to fetch social media');
       }
@@ -47,8 +47,7 @@ export default function SocialMediaManagement() {
 
   const toggleActivation = async (id: number, currentStatus: boolean) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://tajdeediq-001-site1.stempurl.com';
-      const response = await fetch(`${apiUrl}/api/SocialMedia/${id}`, {
+      const response = await fetch(`${API_BASE}/SocialMedia/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -80,8 +79,7 @@ export default function SocialMediaManagement() {
     }
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://tajdeediq-001-site1.stempurl.com';
-      const response = await fetch(`${apiUrl}/api/SocialMedia/${id}`, {
+      const response = await fetch(`${API_BASE}/SocialMedia/${id}`, {
         method: 'DELETE',
       });
 
@@ -206,7 +204,7 @@ export default function SocialMediaManagement() {
                       <div className="flex items-center justify-center">
                         {socialMedia.imagePath ? (
                           <Image
-                            src={`https://tajdeediq-001-site1.stempurl.com${socialMedia.imagePath}`}
+                            src={`/api/proxy${socialMedia.imagePath.startsWith('/') ? '' : '/'}${socialMedia.imagePath}`}
                             alt={socialMedia.iconName}
                             width={40}
                             height={40}

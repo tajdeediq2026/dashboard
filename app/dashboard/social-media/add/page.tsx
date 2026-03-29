@@ -14,6 +14,7 @@ interface FormData {
 }
 
 export default function AddSocialMedia() {
+  const API_BASE = '/api/proxy/api';
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,8 +51,7 @@ export default function AddSocialMedia() {
         uploadFormData.append('file', formData.imageFile);
         uploadFormData.append('uploadType', 'social-media');
 
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://tajdeediq-001-site1.stempurl.com';
-        const uploadResponse = await fetch(`${apiUrl}/api/Upload`, {
+        const uploadResponse = await fetch(`${API_BASE}/Upload`, {
           method: 'POST',
           body: uploadFormData,
         });
@@ -64,8 +64,7 @@ export default function AddSocialMedia() {
         }
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://tajdeediq-001-site1.stempurl.com';
-      const response = await fetch(`${apiUrl}/api/SocialMedia`, {
+      const response = await fetch(`${API_BASE}/SocialMedia`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

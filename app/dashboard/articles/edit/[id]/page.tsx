@@ -6,15 +6,15 @@ import { toast } from "react-hot-toast";
 import { ArticleCreate } from "../../types/Article";
 import { CategoryAll } from "../../types/Category";
 import { Tag } from "../../types/Tag";
-import { PodcastType } from "../../types/PodcastType";
 import { UpperArticle as BaseUpperArticle } from "../../types/UpperArticle";
+import { getBackendBaseUrl } from '@/lib/backend-url';
 
 type UpperArticle = BaseUpperArticle & {
   assignedArticleTitle?: string | null;
   isAvailable?: boolean;
 };
 import Image from "next/image";
-import { getCategories, getTags, getPodcastTypes, getUpperArticles, getArticles, updateArticle } from "../../lib/api";
+import { getCategories, getTags, getUpperArticles, getArticles, updateArticle } from "../../lib/api";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 
@@ -26,7 +26,6 @@ export default function EditArticle({ params }: { params: Promise<{ id: string }
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categories, setCategories] = useState<CategoryAll[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
-  const [podcastTypes, setPodcastTypes] = useState<PodcastType[]>([]);
   const [upperArticles, setUpperArticles] = useState<UpperArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState<ArticleCreate>({
@@ -43,7 +42,6 @@ export default function EditArticle({ params }: { params: Promise<{ id: string }
       name: "",
     },
     tagId: undefined,
-    podcastTypeId: undefined,
     upperArticleId: undefined,
   });
 
@@ -63,17 +61,15 @@ export default function EditArticle({ params }: { params: Promise<{ id: string }
         }
         const articleData = await articleResponse.json();
         // Fetch all related data in parallel
-        const [categoriesData, tagsData, podcastTypesData, allUpperArticlesData, allArticlesData] = await Promise.all([
+        const [categoriesData, tagsData, allUpperArticlesData, allArticlesData] = await Promise.all([
           getCategories(),
           getTags(),
-          getPodcastTypes(),
           getUpperArticles(),
           getArticles() // Get all articles to show current assignments
         ]);
         
         if (Array.isArray(categoriesData)) setCategories(categoriesData);
         if (Array.isArray(tagsData)) setTags(tagsData);
-        if (Array.isArray(podcastTypesData)) setPodcastTypes(podcastTypesData);
         
         // Enrich UpperArticles with current assignment information (excluding current article)
         if (Array.isArray(allUpperArticlesData)) {
@@ -117,7 +113,6 @@ export default function EditArticle({ params }: { params: Promise<{ id: string }
           twitter: articleData.twitter ?? false,
           categoryId: categoryId,
           tagId: articleData.tagId ?? undefined,
-          podcastTypeId: articleData.podcastTypeId ?? undefined,
           upperArticleId: articleData.upperArticleId ?? undefined,
         });
         
@@ -128,9 +123,10 @@ export default function EditArticle({ params }: { params: Promise<{ id: string }
             let imageUrl = articleData.imagePath;
             if (!imageUrl.startsWith('http')) {
               // If it's a relative path, prepend the base URL
+              const backendBase = getBackendBaseUrl();
               imageUrl = imageUrl.startsWith('/') 
-                ? `https://tajdeediq-001-site1.stempurl.com${imageUrl}` 
-                : `https://tajdeediq-001-site1.stempurl.com/${imageUrl}`;
+                ? `${backendBase}${imageUrl}` 
+                : `${backendBase}/${imageUrl}`;
             }
             setCurrentImage(imageUrl);
           } catch (error) {
@@ -178,7 +174,7 @@ export default function EditArticle({ params }: { params: Promise<{ id: string }
         ...prev,
         [name]: checked,
       }));
-    } else if (name === "tagId" || name === "podcastTypeId" || name === "upperArticleId") {
+    } else if (name === "tagId" || name === "upperArticleId") {
       // Convert to number, or undefined if empty (undefined will be converted to 0 in API)
       setFormData((prev) => ({
         ...prev,
@@ -275,7 +271,6 @@ export default function EditArticle({ params }: { params: Promise<{ id: string }
       console.log('Form data before submission:', {
         upperArticleId: formData.upperArticleId,
         tagId: formData.tagId,
-        podcastTypeId: formData.podcastTypeId,
         categoryId: formData.categoryId.id
       });
 
@@ -291,7 +286,6 @@ export default function EditArticle({ params }: { params: Promise<{ id: string }
       console.log('Article data being sent to API:', {
         upperArticleId: articleData.upperArticleId,
         tagId: articleData.tagId,
-        podcastTypeId: articleData.podcastTypeId,
         categoryId: articleData.categoryId.id
       });
 
@@ -396,13 +390,6 @@ export default function EditArticle({ params }: { params: Promise<{ id: string }
               <select id="tagId" name="tagId" value={formData.tagId || ""} onChange={handleInputChange} className="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-right text-black text-sm sm:text-base" disabled={loading}>
                 <option value="">اختر وسم</option>
                 {tags.map((tag) => (<option key={tag.tagId} value={tag.tagId}>{tag.tagName}</option>))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="podcastTypeId" className="block text-sm font-medium text-gray-700 text-right mb-2">نوع البودكاست</label>
-              <select id="podcastTypeId" name="podcastTypeId" value={formData.podcastTypeId || ""} onChange={handleInputChange} className="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-right text-black text-sm sm:text-base" disabled={loading}>
-                <option value="">اختر نوع البودكاست</option>
-                {podcastTypes.map((podcastType) => (<option key={podcastType.podcastId} value={podcastType.podcastId}>{podcastType.podcastName}</option>))}
               </select>
             </div>
             <div>
