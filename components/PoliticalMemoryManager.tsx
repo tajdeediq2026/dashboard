@@ -369,7 +369,7 @@ export default function PoliticalMemoryManager() {
         </div>
       ) : sortedItems.length === 0 ? (
         <div className="bg-white rounded-lg shadow-sm p-10 text-center text-gray-500">
-          لا توجد بيانات حالياً. اضغط "إضافة جديد" لإنشاء أول سجل.
+          لا توجد بيانات حالياً. اضغط &quot;إضافة جديد&quot; لإنشاء أول سجل.
         </div>
       ) : (
         <div className="space-y-4">
