@@ -83,10 +83,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     for (let index = 0; index < targetBases.length; index += 1) {
       const targetBase = targetBases[index];
       const targetUrl = `${targetBase.replace(/\/$/, '')}/${pathStr}`;
+      const hasMoreCandidates = index < targetBases.length - 1;
 
       try {
         console.log('[proxy] Forwarding request to:', targetUrl);
-        response = await axios.request<ArrayBuffer>({
+        const candidateResponse = await axios.request<ArrayBuffer>({
           url: targetUrl,
           method: method as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS',
           headers: {
@@ -100,10 +101,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           httpsAgent: devHttpsAgent
         });
 
+        if (hasMoreCandidates && safeToRetry && candidateResponse.status >= 500) {
+          console.warn('[proxy] Backend candidate returned 5xx, trying next candidate URL');
+          continue;
+        }
+
+        response = candidateResponse;
+
         break;
       } catch (requestError) {
         lastError = requestError;
-        const hasMoreCandidates = index < targetBases.length - 1;
         if (!(hasMoreCandidates && safeToRetry && isNetworkFailure(requestError))) {
           throw requestError;
         }

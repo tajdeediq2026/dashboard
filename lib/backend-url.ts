@@ -27,6 +27,7 @@ export function getBackendBaseUrl(): string {
 
 export function getBackendBaseUrlCandidates(): string[] {
   const candidates: string[] = [];
+  const enableLocalFallback = (process.env.ENABLE_LOCAL_BACKEND_FALLBACK ?? '').trim().toLowerCase() === 'true';
   const pushUnique = (value: string | null) => {
     if (!value) return;
     if (candidates.some((existing) => existing.toLowerCase() === value.toLowerCase())) return;
@@ -39,14 +40,14 @@ export function getBackendBaseUrlCandidates(): string[] {
   // Public API URL is commonly configured in .env.local for dashboard development.
   pushUnique(normalizeBaseUrl(process.env.NEXT_PUBLIC_API_URL ?? ''));
 
-  if (process.env.NODE_ENV === 'development') {
-    // Local backends are useful during API development, but may not always be running.
+  if (process.env.NODE_ENV === 'development' && enableLocalFallback) {
+    // Opt-in local fallback for development only.
     pushUnique(LOCAL_DEV_BACKEND_BASE_URL);
     pushUnique(LOCAL_DEV_HTTP_BACKEND_BASE_URL);
-    pushUnique(PRODUCTION_FALLBACK_BACKEND_BASE_URL);
-  } else {
-    pushUnique(PRODUCTION_FALLBACK_BACKEND_BASE_URL);
   }
+
+  // Always keep production fallback last in case env values are missing.
+  pushUnique(PRODUCTION_FALLBACK_BACKEND_BASE_URL);
 
   return candidates;
 }

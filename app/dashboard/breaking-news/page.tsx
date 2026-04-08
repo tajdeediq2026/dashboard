@@ -13,6 +13,31 @@ interface BreakingNews {
   isPublished: boolean;
 }
 
+const parseDurationMs = (duration: string): number => {
+  if (!duration) return 0;
+
+  const parts = duration.split(':');
+  if (parts.length < 3) return 0;
+
+  const hours = Number(parts[0]) || 0;
+  const minutes = Number(parts[1]) || 0;
+  const secondsPart = Number(parts[2]) || 0;
+
+  return ((hours * 3600) + (minutes * 60) + secondsPart) * 1000;
+};
+
+const isAutoExpired = (news: BreakingNews): boolean => {
+  if (news.isPublished) return false;
+
+  const createdAtMs = new Date(news.createdAt).getTime();
+  if (Number.isNaN(createdAtMs)) return false;
+
+  const expireAtMs = createdAtMs + parseDurationMs(news.breakingNewsDuration);
+  if (expireAtMs <= 0) return false;
+
+  return Date.now() >= expireAtMs;
+};
+
 export default function BreakingNewsPage() {
   const BREAKING_NEWS_API = '/api/proxy/api/BreakingNews';
   const [breakingNews, setBreakingNews] = useState<BreakingNews[]>([]);
@@ -176,16 +201,23 @@ export default function BreakingNewsPage() {
                         {formatDate(news.createdAt)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <button
-                          onClick={() => togglePublish(news.id, news.isPublished)}
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            news.isPublished
-                              ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                              : 'bg-red-100 text-red-800 hover:bg-red-200'
-                          }`}
-                        >
-                          {news.isPublished ? 'منشور' : 'غير منشور'}
-                        </button>
+                        <div className="flex items-center gap-2 justify-end">
+                          {isAutoExpired(news) && (
+                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">
+                              منتهي تلقائياً
+                            </span>
+                          )}
+                          <button
+                            onClick={() => togglePublish(news.id, news.isPublished)}
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              news.isPublished
+                                ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                : 'bg-red-100 text-red-800 hover:bg-red-200'
+                            }`}
+                          >
+                            {news.isPublished ? 'منشور' : 'غير منشور'}
+                          </button>
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex space-x-2 space-x-reverse">
