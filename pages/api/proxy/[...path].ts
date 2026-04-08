@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import axios from 'axios';
 import https from 'https';
-import { getBackendBaseUrl } from '@/lib/backend-url';
+import { getBackendBaseUrlCandidates } from '@/lib/backend-url';
 
 // Simple server-side proxy that forwards requests to the configured backend API.
 // Usage from client: fetch('/api/proxy/api/Tags') -> this route will forward to `${NEXT_PUBLIC_API_URL}/api/Tags`.
@@ -17,6 +17,19 @@ export const config = {
   },
 };
 
+function isNetworkFailure(error: unknown): boolean {
+  if (!axios.isAxiosError(error)) return false;
+
+  return [
+    'ECONNABORTED',
+    'ETIMEDOUT',
+    'ECONNREFUSED',
+    'ENOTFOUND',
+    'EHOSTUNREACH',
+    'ECONNRESET',
+  ].includes(error.code ?? '');
+}
+
 async function readRawBody(req: NextApiRequest): Promise<Buffer> {
   const chunks: Buffer[] = [];
 
@@ -31,12 +44,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { path = [] } = req.query as { path?: string | string[] };
   const pathStr = Array.isArray(path) ? path.join('/') : String(path || '');
 
-  const targetBase = getBackendBaseUrl();
-  const targetUrl = `${targetBase.replace(/\/$/, '')}/${pathStr}`;
+  const backendCandidates = getBackendBaseUrlCandidates();
+  const primaryTargetBase = backendCandidates[0];
+  const method = (req.method || 'GET').toUpperCase();
+  const safeToRetry = ['GET', 'HEAD', 'OPTIONS'].includes(method);
+  const targetBases = safeToRetry ? backendCandidates : backendCandidates.slice(0, 1);
+
+  if (!primaryTargetBase || targetBases.length === 0) {
+    res.status(500).json({ error: 'No backend base URL is configured for proxy forwarding' });
+    return;
+  }
 
   try {
-    const method = req.method || 'GET';
-
     // Forward headers, but avoid forwarding host/connection headers that can cause issues
     // Normalize header names to lowercase so lookups are consistent.
     const forwardHeaders: Record<string, string> = {};
@@ -58,26 +77,44 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    console.log('[proxy] Forwarding request to:', targetUrl);
-    console.log('[proxy] Request method:', method);
-    console.log('[proxy] Request headers:', forwardHeaders);
-    if (typeof body === 'string') {
-      console.log('[proxy] Request body (truncated):', body.substring(0, 1000));
+    let response: Awaited<ReturnType<typeof axios.request<ArrayBuffer>>> | null = null;
+    let lastError: unknown = null;
+
+    for (let index = 0; index < targetBases.length; index += 1) {
+      const targetBase = targetBases[index];
+      const targetUrl = `${targetBase.replace(/\/$/, '')}/${pathStr}`;
+
+      try {
+        console.log('[proxy] Forwarding request to:', targetUrl);
+        response = await axios.request<ArrayBuffer>({
+          url: targetUrl,
+          method: method as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS',
+          headers: {
+            ...forwardHeaders,
+            Accept: forwardHeaders['accept'] || 'application/json'
+          },
+          data: body,
+          timeout: 30000,
+          validateStatus: () => true,
+          responseType: 'arraybuffer',
+          httpsAgent: devHttpsAgent
+        });
+
+        break;
+      } catch (requestError) {
+        lastError = requestError;
+        const hasMoreCandidates = index < targetBases.length - 1;
+        if (!(hasMoreCandidates && safeToRetry && isNetworkFailure(requestError))) {
+          throw requestError;
+        }
+
+        console.warn('[proxy] Backend candidate unreachable, trying next candidate URL');
+      }
     }
 
-    const response = await axios.request<ArrayBuffer>({
-      url: targetUrl,
-      method: method as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS',
-      headers: {
-        ...forwardHeaders,
-        Accept: forwardHeaders['accept'] || 'application/json'
-      },
-      data: body,
-      timeout: 30000,
-      validateStatus: () => true,
-      responseType: 'arraybuffer',
-      httpsAgent: devHttpsAgent
-    });
+    if (!response) {
+      throw (lastError ?? new Error('No response from backend'));
+    }
 
     const responseHeaders = response.headers as Record<string, string | string[] | undefined>;
     const contentTypeHeaderValue = responseHeaders['content-type'];

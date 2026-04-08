@@ -1,13 +1,13 @@
-const FALLBACK_BACKEND_BASE_URL = 'https://tajdeediq-001-site1.stempurl.com';
+const LOCAL_DEV_BACKEND_BASE_URL = 'https://localhost:7065';
+const LOCAL_DEV_HTTP_BACKEND_BASE_URL = 'http://localhost:5094';
+const PRODUCTION_FALLBACK_BACKEND_BASE_URL = 'https://tajdeediq-001-site1.stempurl.com';
 
-export function getBackendBaseUrl(): string {
-  const raw = (process.env.NEXT_PUBLIC_API_URL ?? '').trim();
-  const candidate = raw && !/^(undefined|null)$/i.test(raw)
-    ? raw
-    : FALLBACK_BACKEND_BASE_URL;
+function normalizeBaseUrl(input: string): string | null {
+  const trimmed = input.trim();
+  if (!trimmed || /^(undefined|null)$/i.test(trimmed)) return null;
 
   try {
-    const parsed = new URL(candidate);
+    const parsed = new URL(trimmed);
     const normalizedPath = parsed.pathname.replace(/\/+$/, '');
 
     // Avoid accidental /api/api/* when env is set to .../api.
@@ -17,6 +17,36 @@ export function getBackendBaseUrl(): string {
 
     return parsed.toString().replace(/\/$/, '');
   } catch {
-    return FALLBACK_BACKEND_BASE_URL;
+    return null;
   }
+}
+
+export function getBackendBaseUrl(): string {
+  return getBackendBaseUrlCandidates()[0] ?? PRODUCTION_FALLBACK_BACKEND_BASE_URL;
+}
+
+export function getBackendBaseUrlCandidates(): string[] {
+  const candidates: string[] = [];
+  const pushUnique = (value: string | null) => {
+    if (!value) return;
+    if (candidates.some((existing) => existing.toLowerCase() === value.toLowerCase())) return;
+    candidates.push(value);
+  };
+
+  // Explicit server-side override first.
+  pushUnique(normalizeBaseUrl(process.env.BACKEND_BASE_URL ?? ''));
+
+  // Public API URL is commonly configured in .env.local for dashboard development.
+  pushUnique(normalizeBaseUrl(process.env.NEXT_PUBLIC_API_URL ?? ''));
+
+  if (process.env.NODE_ENV === 'development') {
+    // Local backends are useful during API development, but may not always be running.
+    pushUnique(LOCAL_DEV_BACKEND_BASE_URL);
+    pushUnique(LOCAL_DEV_HTTP_BACKEND_BASE_URL);
+    pushUnique(PRODUCTION_FALLBACK_BACKEND_BASE_URL);
+  } else {
+    pushUnique(PRODUCTION_FALLBACK_BACKEND_BASE_URL);
+  }
+
+  return candidates;
 }

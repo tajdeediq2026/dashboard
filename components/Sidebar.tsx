@@ -19,7 +19,8 @@ import {
   ShieldCheckIcon,
   FilmIcon,
   MusicalNoteIcon,
-  ChartBarIcon
+  ChartBarIcon,
+  BookOpenIcon
 } from '@heroicons/react/24/outline';
 
 export default function Sidebar() {
@@ -44,6 +45,7 @@ export default function Sidebar() {
     { name: 'إنفوجرافيك', href: '/dashboard/infographics', icon: ChartBarIcon },
     { name: 'البودكاست', href: '/dashboard/podcasts', icon: MusicalNoteIcon },
     { name: 'الفيديوهات', href: '/dashboard/videos', icon: FilmIcon },
+    { name: 'الذاكرة السياسية', href: '/dashboard/political-memory', icon: BookOpenIcon },
     { name: 'Users', href: '/dashboard/users', icon: UsersIcon },
     { name: 'Settings', href: '/dashboard/settings', icon: CogIcon },
   ];
