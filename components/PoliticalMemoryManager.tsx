@@ -186,7 +186,9 @@ export default function PoliticalMemoryManager() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.politicalMemoryTitle.trim() && !form.politicalMemoryFrameContent.trim()) {
+    const isEdit = editingId !== null;
+
+    if (!isEdit && !form.politicalMemoryTitle.trim() && !form.politicalMemoryFrameContent.trim() && !imageFile) {
       toast.error("يرجى إدخال العنوان أو المحتوى");
       return;
     }
@@ -194,14 +196,15 @@ export default function PoliticalMemoryManager() {
     setSubmitting(true);
 
     try {
-      const isEdit = editingId !== null;
       const url = isEdit ? `/api/backend/PoliticalMemory/${editingId}` : "/api/backend/PoliticalMemory";
       const method = isEdit ? "PUT" : "POST";
 
       const payload = new FormData();
+
       payload.append("PoliticalMemoryTitle", form.politicalMemoryTitle);
       payload.append("PoliticalMemoryFrameContent", form.politicalMemoryFrameContent);
       payload.append("PoliticalMemoryIsPublished", String(form.politicalMemoryIsPublished));
+
       if (imageFile) {
         payload.append("Image", imageFile, imageFile.name);
       }
@@ -214,7 +217,7 @@ export default function PoliticalMemoryManager() {
       if (!response.ok) {
         const errorBody = await response.text().catch(() => "");
         console.error("Save PoliticalMemory error:", response.status, errorBody.slice(0, 500));
-        throw new Error("Failed to save PoliticalMemory");
+        throw new Error(errorBody || `Failed to save PoliticalMemory (${response.status})`);
       }
 
       toast.success(isEdit ? "تم تحديث سجل الذاكرة السياسية" : "تم إنشاء سجل جديد في الذاكرة السياسية");
@@ -222,7 +225,8 @@ export default function PoliticalMemoryManager() {
       await fetchItems();
     } catch (error) {
       console.error("Error saving PoliticalMemory:", error);
-      toast.error("فشل في حفظ السجل");
+      const message = error instanceof Error ? error.message : "";
+      toast.error(message ? `فشل في حفظ السجل: ${message}` : "فشل في حفظ السجل");
     } finally {
       setSubmitting(false);
     }
