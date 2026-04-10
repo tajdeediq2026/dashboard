@@ -28,26 +28,65 @@ export default function Sidebar() {
   
   const navigation = [
     // { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
-    { name: 'الرئيسية', href: '/dashboard', icon: HomeIcon },
+    { name: "الرئيسية", href: "/dashboard", icon: HomeIcon },
     // { name: 'Articles', href: '/dashboard/articles', icon: DocumentTextIcon },
-    { name: 'المقالات', href: '/dashboard/articles', icon: DocumentTextIcon },
+    { name: "الأخبار", href: "/dashboard/articles", icon: DocumentTextIcon },
     // { name: 'Categories', href: '/dashboard/categories', icon: FolderIcon },
-    { name: 'الأقسام', href: '/dashboard/categories', icon: FolderIcon },
-    { name: 'وسوم', href: '/dashboard/tags', icon: TagIcon },
-    { name: 'المقالات في الأعلى', href: '/dashboard/upper-articles', icon: ChevronUpIcon },
-    { name: 'الأخبار العاجلة', href: '/dashboard/breaking-news', icon: ExclamationTriangleIcon },
-    { name: 'وسائل التواصل', href: '/dashboard/social-media', icon: ShareIcon },
-    { name: 'أعلن معنا', href: '/dashboard/advertise-with-us', icon: MegaphoneIcon },
-    { name: 'مدد الإعلان', href: '/dashboard/advertise-with-us/durations', icon: ClockIcon },
-    { name: 'تواصل معنا', href: '/dashboard/contact-us', icon: ChatBubbleLeftRightIcon },
-    { name: 'عن جريدة تجديد', href: '/dashboard/about-us', icon: InformationCircleIcon },
-    { name: 'سياسة الخصوصية', href: '/dashboard/privacy-policy', icon: ShieldCheckIcon },
-    { name: 'إنفوجرافيك', href: '/dashboard/infographics', icon: ChartBarIcon },
-    { name: 'البودكاست', href: '/dashboard/podcasts', icon: MusicalNoteIcon },
-    { name: 'الفيديوهات', href: '/dashboard/videos', icon: FilmIcon },
-    { name: 'الذاكرة السياسية', href: '/dashboard/political-memory', icon: BookOpenIcon },
-    { name: 'Users', href: '/dashboard/users', icon: UsersIcon },
-    { name: 'Settings', href: '/dashboard/settings', icon: CogIcon },
+    { name: "الأقسام", href: "/dashboard/categories", icon: FolderIcon },
+    { name: "وسوم", href: "/dashboard/tags", icon: TagIcon },
+    {
+      name: "المقالات في الأعلى",
+      href: "/dashboard/upper-articles",
+      icon: ChevronUpIcon,
+    },
+    {
+      name: "الأخبار العاجلة",
+      href: "/dashboard/breaking-news",
+      icon: ExclamationTriangleIcon,
+    },
+    { name: "وسائل التواصل", href: "/dashboard/social-media", icon: ShareIcon },
+    {
+      name: "أعلن معنا",
+      href: "/dashboard/advertise-with-us",
+      icon: MegaphoneIcon,
+    },
+    {
+      name: "مدد الإعلان",
+      href: "/dashboard/advertise-with-us/durations",
+      icon: ClockIcon,
+    },
+    {
+      name: "تواصل معنا",
+      href: "/dashboard/contact-us",
+      icon: ChatBubbleLeftRightIcon,
+    },
+    {
+      name: "عن جريدة تجديد",
+      href: "/dashboard/about-us",
+      icon: InformationCircleIcon,
+    },
+    {
+      name: "سياسة الخصوصية",
+      href: "/dashboard/privacy-policy",
+      icon: ShieldCheckIcon,
+    },
+    { name: "إنفوجرافيك", href: "/dashboard/infographics", icon: ChartBarIcon },
+    { name: "البودكاست", href: "/dashboard/podcasts", icon: MusicalNoteIcon },
+    { name: "الفيديوهات", href: "/dashboard/videos", icon: FilmIcon },
+    {
+      name: "الذاكرة السياسية",
+      href: "/dashboard/political-memory",
+      icon: BookOpenIcon,
+    },
+    {
+      name: "المقالات",
+      href: "/dashboard/authors-articles",
+      icon: DocumentTextIcon,
+    },
+    { name: "الكتاب", href: "/dashboard/authors", icon: DocumentTextIcon },
+
+    { name: "المستخدمون", href: "/dashboard/users", icon: UsersIcon },
+    { name: "الإعدادات", href: "/dashboard/settings", icon: CogIcon },
   ];
 
   return (

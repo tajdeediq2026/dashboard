@@ -137,17 +137,17 @@ export default function Articles() {
           className="w-full sm:w-auto px-4 py-2 bg-green-700 text-white rounded-md hover:bg-custom-green-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-custom-green flex items-center justify-center"
         >
           <PlusIcon className="h-5 w-5 ml-2" />
-          إضافة مقال جديد
+          إضافة خبر جديد
         </Link>
 
-        <h1 className="text-2xl font-semibold text-gray-800">المقالات</h1>
+        <h1 className="text-2xl font-semibold text-gray-800">الأخبار</h1>
       </div>
 
       {articles.length === 0 ? (
         <EmptyState
-          title="لا توجد مقالات حالياً"
-          description="ابدأ بإنشاء مقالك الأول"
-          actionLabel="إضافة مقال جديد"
+          title="لا توجد أخبار حالياً"
+          description="ابدأ بإنشاء خبرك الأول"
+          actionLabel="إضافة خبر جديد"
           actionHref="/dashboard/articles/add"
         />
       ) : (

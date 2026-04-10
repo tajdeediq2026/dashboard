@@ -3,7 +3,6 @@ import { ArticleAll, ArticleCreate } from '../types/Article';
 import { CategoryAll } from '../types/Category';
 import { Tag, CreateTagDto, UpdateTagDto } from '../types/Tag';
 import { UpperArticle, CreateUpperArticleDto, UpdateUpperArticleDto } from '../../upper-articles/types/UpperArticle';
-import { getBackendBaseUrl } from '@/lib/backend-url';
 
 if (typeof window === 'undefined' && process.env.NODE_ENV !== 'production') {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
@@ -17,11 +16,11 @@ const api = axios.create({
   }
 });
 
-// Set default baseURL to server-side configured API; client will override to use proxy.
-api.defaults.baseURL = getBackendBaseUrl();
-if (typeof window !== 'undefined') {
-  api.defaults.baseURL = '';
-}
+const FORCED_API_BASE_URL = 'https://tajdeediq-001-site1.stempurl.com/api';
+const CLIENT_PROXY_BASE_URL = '/api/proxy';
+
+// Server: direct production API. Client: same-origin proxy to avoid CORS issues.
+api.defaults.baseURL = typeof window === 'undefined' ? FORCED_API_BASE_URL : CLIENT_PROXY_BASE_URL;
 
 // Add request interceptor for debugging
 api.interceptors.request.use(
@@ -42,21 +41,25 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    console.error('API Response Error:', {
-      url: error.config?.url,
-      status: error.response?.status,
-      message: error.message,
-      data: error.response?.data
-    });
+    if (axios.isAxiosError(error)) {
+      console.error('API Response Error:', {
+        url: error.config?.url,
+        status: error.response?.status,
+        message: error.message,
+        code: error.code,
+        data: error.response?.data
+      });
+    } else {
+      console.error('API Response Error (non-axios):', error);
+    }
     return Promise.reject(error);
   }
 );
 
-const API_PREFIX = typeof window === 'undefined' ? '/api' : '/api/backend';
-const API_URL = `${API_PREFIX}/Articles`;
-const Categories_API_URL = `${API_PREFIX}/Categories`;
-const Tags_API_URL = `${API_PREFIX}/Tags`;
-const UpperArticles_API_URL = `${API_PREFIX}/UpperArticles`;
+const API_URL = typeof window === 'undefined' ? 'Articles' : 'api/Articles';
+const Categories_API_URL = typeof window === 'undefined' ? 'Categories' : 'api/Categories';
+const Tags_API_URL = typeof window === 'undefined' ? 'Tags' : 'api/Tags';
+const UpperArticles_API_URL = typeof window === 'undefined' ? 'UpperArticles' : 'api/UpperArticles';
 
 export const updateArticle = async (id: string, articleData: ArticleCreate, file?: File): Promise<ArticleAll> => {
   try {
@@ -347,10 +350,6 @@ export const createArticle = async (articleData: ArticleCreate, file?: File): Pr
 export const getArticles = async (): Promise<ArticleAll[]> => {
   try {
     const response = await api.get(API_URL, {
-      headers: {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
-      },
       // Add timestamp to prevent caching
       params: {
         _t: Date.now()
