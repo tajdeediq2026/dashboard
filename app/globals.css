@@ -39,7 +39,6 @@ body {
 /* Keep all form text clearly readable in light mode */
 html:not(.dark) input,
 html:not(.dark) textarea,
-html:not(.dark) select,
-html:not(.dark) button {
+html:not(.dark) select {
   color: #000000;
 }

@@ -16,13 +16,11 @@ interface PoliticalMemoryItem {
 
 interface FormState {
   politicalMemoryTitle: string;
-  politicalMemoryFrameContent: string;
   politicalMemoryIsPublished: boolean;
 }
 
 const EMPTY_FORM: FormState = {
   politicalMemoryTitle: "",
-  politicalMemoryFrameContent: "",
   politicalMemoryIsPublished: true,
 };
 
@@ -32,13 +30,23 @@ function formatDate(dateString?: string): string {
   const parsed = new Date(dateString);
   if (Number.isNaN(parsed.getTime())) return "-";
 
-  return parsed.toLocaleString("ar-EG", {
-    year: "numeric",
+  const dateParts = new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
     month: "short",
-    day: "numeric",
+    year: "numeric",
+  }).formatToParts(parsed);
+
+  const day = dateParts.find((part) => part.type === "day")?.value ?? "";
+  const month = dateParts.find((part) => part.type === "month")?.value ?? "";
+  const year = dateParts.find((part) => part.type === "year")?.value ?? "";
+
+  const timePart = parsed.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
+    hour12: true,
   });
+
+  return `${day} ${month} ${year} - ${timePart}`;
 }
 
 function getImageSrc(path?: string | null): string {
@@ -49,72 +57,11 @@ function getImageSrc(path?: string | null): string {
   return `/api/proxy${path.startsWith("/") ? "" : "/"}${path}`;
 }
 
-function normalizeEmbedUrl(url: string): string | null {
-  const trimmed = (url || "").trim();
-  if (!trimmed) return null;
-
-  try {
-    const parsed = new URL(trimmed);
-    const host = parsed.hostname.toLowerCase();
-
-    if (host === "youtu.be") {
-      const id = parsed.pathname.replace(/^\//, "").split("/")[0];
-      if (!id) return null;
-      return `https://www.youtube.com/embed/${id}`;
-    }
-
-    if (host.includes("youtube.com")) {
-      if (parsed.pathname.startsWith("/embed/")) {
-        return `https://www.youtube.com${parsed.pathname}`;
-      }
-
-      const id = parsed.searchParams.get("v");
-      if (id) {
-        return `https://www.youtube.com/embed/${id}`;
-      }
-    }
-
-    if (host.includes("vimeo.com")) {
-      if (host === "player.vimeo.com") {
-        return `https://player.vimeo.com${parsed.pathname}`;
-      }
-
-      const id = parsed.pathname.replace(/^\//, "").split("/")[0];
-      if (id) {
-        return `https://player.vimeo.com/video/${id}`;
-      }
-    }
-  } catch {
-    return null;
-  }
-
-  return null;
-}
-
-function extractEmbedUrl(content?: string | null): string | null {
-  if (!content) return null;
-
-  const text = content.trim();
-  if (!text) return null;
-
-  const srcMatch = text.match(/src\s*=\s*['\"]([^'\"]+)['\"]/i);
-  if (srcMatch?.[1]) {
-    const normalized = normalizeEmbedUrl(srcMatch[1]);
-    if (normalized) return normalized;
-  }
-
-  const rawUrlMatch = text.match(/https?:\/\/[^\s"'<>]+/i);
-  if (rawUrlMatch?.[0]) {
-    const normalized = normalizeEmbedUrl(rawUrlMatch[0]);
-    if (normalized) return normalized;
-  }
-
-  return null;
-}
-
 export default function PoliticalMemoryManager() {
   const [items, setItems] = useState<PoliticalMemoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sortField, setSortField] = useState<"title" | "status" | "createdDate">("createdDate");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -148,14 +95,39 @@ export default function PoliticalMemoryManager() {
     fetchItems();
   }, []);
 
+  const handleSort = (field: "title" | "status" | "createdDate") => {
+    if (sortField === field) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+      return;
+    }
+
+    setSortField(field);
+    setSortDirection(field === "createdDate" ? "desc" : "asc");
+  };
+
   const sortedItems = useMemo(
-    () =>
-      [...items].sort(
-        (a, b) =>
-          new Date(b.politicalMemoryModifiedDate || b.politicalMemoryCreatedDate).getTime() -
-          new Date(a.politicalMemoryModifiedDate || a.politicalMemoryCreatedDate).getTime()
-      ),
-    [items]
+    () => {
+      return [...items].sort((a, b) => {
+        let comparison = 0;
+
+        if (sortField === "title") {
+          const aTitle = (a.politicalMemoryTitle || "").trim();
+          const bTitle = (b.politicalMemoryTitle || "").trim();
+          comparison = aTitle.localeCompare(bTitle, "ar");
+        } else if (sortField === "status") {
+          const aStatus = Number(!!a.politicalMemoryIsPublished);
+          const bStatus = Number(!!b.politicalMemoryIsPublished);
+          comparison = aStatus - bStatus;
+        } else {
+          const aCreated = new Date(a.politicalMemoryCreatedDate).getTime();
+          const bCreated = new Date(b.politicalMemoryCreatedDate).getTime();
+          comparison = aCreated - bCreated;
+        }
+
+        return sortDirection === "asc" ? comparison : -comparison;
+      });
+    },
+    [items, sortField, sortDirection]
   );
 
   const openCreate = () => {
@@ -170,7 +142,6 @@ export default function PoliticalMemoryManager() {
     setImageFile(null);
     setForm({
       politicalMemoryTitle: item.politicalMemoryTitle ?? "",
-      politicalMemoryFrameContent: item.politicalMemoryFrameContent ?? "",
       politicalMemoryIsPublished: item.politicalMemoryIsPublished ?? true,
     });
     setShowForm(true);
@@ -188,8 +159,8 @@ export default function PoliticalMemoryManager() {
 
     const isEdit = editingId !== null;
 
-    if (!isEdit && !form.politicalMemoryTitle.trim() && !form.politicalMemoryFrameContent.trim() && !imageFile) {
-      toast.error("يرجى إدخال العنوان أو المحتوى");
+    if (!form.politicalMemoryTitle.trim()) {
+      toast.error("يرجى إدخال العنوان");
       return;
     }
 
@@ -202,7 +173,6 @@ export default function PoliticalMemoryManager() {
       const payload = new FormData();
 
       payload.append("PoliticalMemoryTitle", form.politicalMemoryTitle);
-      payload.append("PoliticalMemoryFrameContent", form.politicalMemoryFrameContent);
       payload.append("PoliticalMemoryIsPublished", String(form.politicalMemoryIsPublished));
 
       if (imageFile) {
@@ -300,18 +270,6 @@ export default function PoliticalMemoryManager() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 text-right mb-1">محتوى الإطار</label>
-              <textarea
-                title="محتوى الإطار"
-                value={form.politicalMemoryFrameContent}
-                onChange={(e) => setForm((prev) => ({ ...prev, politicalMemoryFrameContent: e.target.value }))}
-                rows={8}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-right text-sm leading-7 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="اكتب محتوى الإطار هنا..."
-              />
-            </div>
-
-            <div>
               <label className="block text-sm font-medium text-gray-700 text-right mb-1">رفع صورة (اختياري)</label>
               <input
                 type="file"
@@ -376,76 +334,89 @@ export default function PoliticalMemoryManager() {
           لا توجد بيانات حالياً. اضغط &quot;إضافة جديد&quot; لإنشاء أول سجل.
         </div>
       ) : (
-        <div className="space-y-4">
-          {sortedItems.map((item) => (
-            <article key={item.politicalMemoryId} className="bg-white rounded-lg shadow-sm border border-gray-100 p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex flex-col gap-2 min-w-[170px]">
-                  <div className="text-left text-xs text-gray-500">
-                    <div>رقم: #{item.politicalMemoryId}</div>
-                    <div className="mt-1">الإنشاء: {formatDate(item.politicalMemoryCreatedDate)}</div>
-                    <div className="mt-1">آخر تعديل: {formatDate(item.politicalMemoryModifiedDate)}</div>
-                    <div className="mt-1">الحالة: {item.politicalMemoryIsPublished ? "منشورة" : "مسودة"}</div>
-                  </div>
-                  <div className="flex gap-2 mt-1">
-                    <button
-                      onClick={() => openEdit(item)}
-                      className="inline-flex items-center gap-1 rounded-lg bg-amber-50 border border-amber-200 px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-100"
-                    >
-                      <PencilIcon className="h-3.5 w-3.5" />
-                      تعديل
-                    </button>
-                    <button
-                      onClick={() => handleDelete(item.politicalMemoryId)}
-                      disabled={deletingId === item.politicalMemoryId}
-                      className="inline-flex items-center gap-1 rounded-lg bg-red-50 border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 disabled:opacity-50"
-                    >
-                      <TrashIcon className="h-3.5 w-3.5" />
-                      {deletingId === item.politicalMemoryId ? "جاري..." : "حذف"}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex-1 text-right">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-2">
-                    {item.politicalMemoryTitle || "بدون عنوان"}
-                  </h2>
-                  {item.politicalMemoryImagePath && (
-                    <img
-                      src={getImageSrc(item.politicalMemoryImagePath)}
-                      alt={item.politicalMemoryTitle || "Political memory image"}
-                      className="w-full max-w-sm h-48 object-cover rounded-lg border border-gray-200 mb-3 mr-auto"
-                    />
-                  )}
-                  {(() => {
-                    const embedUrl = extractEmbedUrl(item.politicalMemoryFrameContent);
-                    if (embedUrl) {
-                      return (
-                        <div className="mb-3 w-full max-w-3xl mr-auto">
-                          <div className="relative w-full aspect-video overflow-hidden rounded-lg border border-gray-200">
-                            <iframe
-                              src={embedUrl}
-                              title={item.politicalMemoryTitle || "Embedded video"}
-                              className="absolute inset-0 h-full w-full"
-                              frameBorder={0}
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                              allowFullScreen
-                            />
+        <div className="bg-white shadow-md rounded-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort("title")}
+                  >
+                    العنوان {sortField === "title" && (sortDirection === "asc" ? "↑" : "↓")}
+                  </th>
+                  <th
+                    className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort("status")}
+                  >
+                    الحالة {sortField === "status" && (sortDirection === "asc" ? "↑" : "↓")}
+                  </th>
+                  <th
+                    className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort("createdDate")}
+                  >
+                    تاريخ الإنشاء {sortField === "createdDate" && (sortDirection === "asc" ? "↑" : "↓")}
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    الإجراءات
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {sortedItems.map((item) => (
+                  <tr key={item.politicalMemoryId}>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-start gap-3">
+                        {item.politicalMemoryImagePath && (
+                          <img
+                            src={getImageSrc(item.politicalMemoryImagePath)}
+                            alt={item.politicalMemoryTitle || "Political memory"}
+                            className="w-14 h-14 object-cover rounded border border-gray-200"
+                          />
+                        )}
+                        <div className="text-left">
+                          <div className="text-sm font-medium text-gray-900">
+                            {item.politicalMemoryTitle || "بدون عنوان"}
                           </div>
                         </div>
-                      );
-                    }
-
-                    return (
-                      <p className="text-gray-700 leading-7 whitespace-pre-line break-words">
-                        {item.politicalMemoryFrameContent || "لا يوجد محتوى"}
-                      </p>
-                    );
-                  })()}
-                </div>
-              </div>
-            </article>
-          ))}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <span
+                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          item.politicalMemoryIsPublished
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
+                        {item.politicalMemoryIsPublished ? "منشورة" : "مسودة"}
+                      </span>
+                    </td>
+                    <td dir="ltr" className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-left">
+                      {formatDate(item.politicalMemoryCreatedDate)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">
+                      <button
+                        onClick={() => openEdit(item)}
+                        title="تعديل"
+                        className="text-custom-green hover:text-custom-green-dark ml-3"
+                      >
+                        <PencilIcon className="h-5 w-5" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(item.politicalMemoryId)}
+                        disabled={deletingId === item.politicalMemoryId}
+                        title="حذف"
+                        className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                      >
+                        <TrashIcon className="h-5 w-5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

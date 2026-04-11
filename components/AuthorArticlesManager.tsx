@@ -55,13 +55,24 @@ function formatDate(input?: string): string {
   if (!input) return "-";
   const date = new Date(input);
   if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleString("ar-EG", {
-    year: "numeric",
+
+  const dateParts = new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
     month: "short",
-    day: "numeric",
+    year: "numeric",
+  }).formatToParts(date);
+
+  const day = dateParts.find((part) => part.type === "day")?.value ?? "";
+  const month = dateParts.find((part) => part.type === "month")?.value ?? "";
+  const year = dateParts.find((part) => part.type === "year")?.value ?? "";
+
+  const timePart = date.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
+    hour12: true,
   });
+
+  return `${day} ${month} ${year} - ${timePart}`;
 }
 
 export default function AuthorArticlesManager() {
@@ -75,11 +86,41 @@ export default function AuthorArticlesManager() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [sortField, setSortField] = useState<"title" | "author" | "tag" | "status" | "createdDate">("createdDate");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
   const sortedItems = useMemo(
-    () => [...items].sort((a, b) => new Date(b.updatedDate || b.createdDate).getTime() - new Date(a.updatedDate || a.createdDate).getTime()),
-    [items]
+    () => {
+      return [...items].sort((a, b) => {
+        let comparison = 0;
+
+        if (sortField === "title") {
+          comparison = (a.authorArticleTitle || "").localeCompare(b.authorArticleTitle || "", "ar");
+        } else if (sortField === "author") {
+          comparison = (a.authorName || "").localeCompare(b.authorName || "", "ar");
+        } else if (sortField === "tag") {
+          comparison = (a.tagName || "").localeCompare(b.tagName || "", "ar");
+        } else if (sortField === "status") {
+          comparison = Number(a.isPublished) - Number(b.isPublished);
+        } else {
+          comparison = new Date(a.createdDate).getTime() - new Date(b.createdDate).getTime();
+        }
+
+        return sortDirection === "asc" ? comparison : -comparison;
+      });
+    },
+    [items, sortField, sortDirection]
   );
+
+  const handleSort = (field: "title" | "author" | "tag" | "status" | "createdDate") => {
+    if (sortField === field) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+      return;
+    }
+
+    setSortField(field);
+    setSortDirection(field === "createdDate" ? "desc" : "asc");
+  };
 
   const fetchLookups = async () => {
     const [authorsRes, tagsRes] = await Promise.all([
@@ -429,52 +470,98 @@ export default function AuthorArticlesManager() {
           لا توجد مقالات حالياً.
         </div>
       ) : (
-        <div className="space-y-4">
-          {sortedItems.map((item) => (
-            <article key={item.authorArticleId} className="bg-white rounded-lg shadow-sm border border-gray-100 p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => openEdit(item)}
-                    className="inline-flex items-center gap-1 rounded-lg bg-amber-50 border border-amber-200 px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-100"
+        <div className="bg-white shadow-md rounded-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th
+                    className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort("title")}
                   >
-                    <PencilIcon className="h-3.5 w-3.5" />
-                    تعديل
-                  </button>
-                  <button
-                    onClick={() => handleDelete(item.authorArticleId)}
-                    disabled={deletingId === item.authorArticleId}
-                    className="inline-flex items-center gap-1 rounded-lg bg-red-50 border border-red-200 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100 disabled:opacity-60"
+                    العنوان {sortField === "title" && (sortDirection === "asc" ? "↑" : "↓")}
+                  </th>
+                  <th
+                    className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort("author")}
                   >
-                    <TrashIcon className="h-3.5 w-3.5" />
-                    {deletingId === item.authorArticleId ? "جاري الحذف..." : "حذف"}
-                  </button>
-                </div>
-
-                <div className="text-right flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900">{item.authorArticleTitle || "بدون عنوان"}</h3>
-                  <p className="text-xs text-gray-500 mt-1">الكاتب: {item.authorName || `#${item.authorId}`}</p>
-                  <p className="text-xs text-gray-500 mt-1">الوسم: {item.tagName || "بدون وسم"}</p>
-                  <p className="text-xs text-gray-500 mt-1">الحالة: {item.isPublished ? "منشور" : "مسودة"}</p>
-                  <p className="text-xs text-gray-500 mt-1">آخر تحديث: {formatDate(item.updatedDate)}</p>
-                </div>
-              </div>
-
-              {item.authorArticleContent && (
-                <p className="mt-4 text-sm text-gray-700 leading-7 whitespace-pre-wrap">{item.authorArticleContent}</p>
-              )}
-
-              {item.imagePath && (
-                <div className="mt-4">
-                  <img
-                    src={item.imagePath}
-                    alt={item.authorArticleTitle || "author-article"}
-                    className="w-full max-w-xs rounded-lg object-cover border border-gray-200"
-                  />
-                </div>
-              )}
-            </article>
-          ))}
+                    الكاتب {sortField === "author" && (sortDirection === "asc" ? "↑" : "↓")}
+                  </th>
+                  <th
+                    className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort("tag")}
+                  >
+                    الوسم {sortField === "tag" && (sortDirection === "asc" ? "↑" : "↓")}
+                  </th>
+                  <th
+                    className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort("status")}
+                  >
+                    الحالة {sortField === "status" && (sortDirection === "asc" ? "↑" : "↓")}
+                  </th>
+                  <th
+                    className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort("createdDate")}
+                  >
+                    تاريخ الإنشاء {sortField === "createdDate" && (sortDirection === "asc" ? "↑" : "↓")}
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    الإجراءات
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {sortedItems.map((item) => (
+                  <tr key={item.authorArticleId}>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-start">
+                        <div className="text-right">
+                          <div className="text-sm font-medium text-gray-900">
+                            {item.authorArticleTitle || "بدون عنوان"}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">
+                      {item.authorName || `#${item.authorId}`}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">
+                      {item.tagName || "بدون وسم"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <span
+                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          item.isPublished ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
+                        {item.isPublished ? "منشور" : "مسودة"}
+                      </span>
+                    </td>
+                    <td dir="ltr" className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-left">
+                      {formatDate(item.createdDate)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">
+                      <button
+                        onClick={() => openEdit(item)}
+                        title="تعديل"
+                        className="text-custom-green hover:text-custom-green-dark ml-3"
+                      >
+                        <PencilIcon className="h-5 w-5" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(item.authorArticleId)}
+                        disabled={deletingId === item.authorArticleId}
+                        title="حذف"
+                        className="text-red-600 hover:text-red-900 disabled:opacity-60"
+                      >
+                        <TrashIcon className="h-5 w-5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
