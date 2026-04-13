@@ -20,7 +20,8 @@ import {
   FilmIcon,
   MusicalNoteIcon,
   ChartBarIcon,
-  BookOpenIcon
+  BookOpenIcon,
+  PencilSquareIcon
 } from '@heroicons/react/24/outline';
 
 export default function Sidebar() {
@@ -58,6 +59,7 @@ export default function Sidebar() {
       href: "/dashboard/authors-articles",
       icon: DocumentTextIcon,
     },
+    { name: "كاريكاتير", href: "/dashboard/caricatures", icon: PencilSquareIcon },
     { name: "الكتاب", href: "/dashboard/authors", icon: DocumentTextIcon },
     {
       name: "أعلن معنا",
