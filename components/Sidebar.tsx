@@ -45,6 +45,20 @@ export default function Sidebar() {
       icon: ExclamationTriangleIcon,
     },
     { name: "وسائل التواصل", href: "/dashboard/social-media", icon: ShareIcon },
+    { name: "إنفوجرافيك", href: "/dashboard/infographics", icon: ChartBarIcon },
+    { name: "البودكاست", href: "/dashboard/podcasts", icon: MusicalNoteIcon },
+    { name: "الفيديوهات", href: "/dashboard/videos", icon: FilmIcon },
+    {
+      name: "الذاكرة السياسية",
+      href: "/dashboard/political-memory",
+      icon: BookOpenIcon,
+    },
+    {
+      name: "المقالات",
+      href: "/dashboard/authors-articles",
+      icon: DocumentTextIcon,
+    },
+    { name: "الكتاب", href: "/dashboard/authors", icon: DocumentTextIcon },
     {
       name: "أعلن معنا",
       href: "/dashboard/advertise-with-us",
@@ -70,20 +84,6 @@ export default function Sidebar() {
       href: "/dashboard/privacy-policy",
       icon: ShieldCheckIcon,
     },
-    { name: "إنفوجرافيك", href: "/dashboard/infographics", icon: ChartBarIcon },
-    { name: "البودكاست", href: "/dashboard/podcasts", icon: MusicalNoteIcon },
-    { name: "الفيديوهات", href: "/dashboard/videos", icon: FilmIcon },
-    {
-      name: "الذاكرة السياسية",
-      href: "/dashboard/political-memory",
-      icon: BookOpenIcon,
-    },
-    {
-      name: "المقالات",
-      href: "/dashboard/authors-articles",
-      icon: DocumentTextIcon,
-    },
-    { name: "الكتاب", href: "/dashboard/authors", icon: DocumentTextIcon },
 
     { name: "المستخدمون", href: "/dashboard/users", icon: UsersIcon },
     { name: "الإعدادات", href: "/dashboard/settings", icon: CogIcon },
