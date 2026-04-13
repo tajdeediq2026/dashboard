@@ -42,7 +42,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ar" dir="rtl">
-      <body className={alJazeera.variable}>{children}</body>
+      <body className={alJazeera.variable} suppressHydrationWarning>{children}</body>
     </html>
   )
 }
